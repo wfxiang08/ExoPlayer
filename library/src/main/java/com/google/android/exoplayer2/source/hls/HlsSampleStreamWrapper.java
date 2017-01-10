@@ -18,6 +18,7 @@ package com.google.android.exoplayer2.source.hls;
 import android.os.Handler;
 import android.text.TextUtils;
 import android.util.SparseArray;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.FormatHolder;
@@ -39,6 +40,7 @@ import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.Loader;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.MimeTypes;
+
 import java.io.IOException;
 import java.util.LinkedList;
 
@@ -46,8 +48,8 @@ import java.util.LinkedList;
  * Loads {@link HlsMediaChunk}s obtained from a {@link HlsChunkSource}, and provides
  * {@link SampleStream}s from which the loaded media can be consumed.
  */
-/* package */ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
-    SequenceableLoader, ExtractorOutput, UpstreamFormatChangedListener {
+final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
+        SequenceableLoader, ExtractorOutput, UpstreamFormatChangedListener {
 
   /**
    * A callback to be notified of events.
@@ -107,22 +109,22 @@ import java.util.LinkedList;
   private boolean loadingFinished;
 
   /**
-   * @param trackType The type of the track. One of the {@link C} {@code TRACK_TYPE_*} constants.
-   * @param callback A callback for the wrapper.
-   * @param chunkSource A {@link HlsChunkSource} from which chunks to load are obtained.
-   * @param allocator An {@link Allocator} from which to obtain media buffer allocations.
-   * @param positionUs The position from which to start loading media.
-   * @param muxedAudioFormat If HLS master playlist indicates that the stream contains muxed audio,
-   *     this is the audio {@link Format} as defined by the playlist.
-   * @param muxedCaptionFormat If HLS master playlist indicates that the stream contains muxed
-   *     captions, this is the audio {@link Format} as defined by the playlist.
+   * @param trackType             The type of the track. One of the {@link C} {@code TRACK_TYPE_*} constants.
+   * @param callback              A callback for the wrapper.
+   * @param chunkSource           A {@link HlsChunkSource} from which chunks to load are obtained.
+   * @param allocator             An {@link Allocator} from which to obtain media buffer allocations.
+   * @param positionUs            The position from which to start loading media.
+   * @param muxedAudioFormat      If HLS master playlist indicates that the stream contains muxed audio,
+   *                              this is the audio {@link Format} as defined by the playlist.
+   * @param muxedCaptionFormat    If HLS master playlist indicates that the stream contains muxed
+   *                              captions, this is the audio {@link Format} as defined by the playlist.
    * @param minLoadableRetryCount The minimum number of times that the source should retry a load
-   *     before propagating an error.
-   * @param eventDispatcher A dispatcher to notify of events.
+   *                              before propagating an error.
+   * @param eventDispatcher       A dispatcher to notify of events.
    */
   public HlsSampleStreamWrapper(int trackType, Callback callback, HlsChunkSource chunkSource,
-      Allocator allocator, long positionUs, Format muxedAudioFormat, Format muxedCaptionFormat,
-      int minLoadableRetryCount, EventDispatcher eventDispatcher) {
+                                Allocator allocator, long positionUs, Format muxedAudioFormat, Format muxedCaptionFormat,
+                                int minLoadableRetryCount, EventDispatcher eventDispatcher) {
     this.trackType = trackType;
     this.callback = callback;
     this.chunkSource = chunkSource;
@@ -171,7 +173,7 @@ import java.util.LinkedList;
   }
 
   public boolean selectTracks(TrackSelection[] selections, boolean[] mayRetainStreamFlags,
-      SampleStream[] streams, boolean[] streamResetFlags, boolean isFirstTrackSelection) {
+                              SampleStream[] streams, boolean[] streamResetFlags, boolean isFirstTrackSelection) {
     Assertions.checkState(prepared);
     // Disable old tracks.
     for (int i = 0; i < selections.length; i++) {
@@ -243,14 +245,14 @@ import java.util.LinkedList;
       long bufferedPositionUs = lastSeekPositionUs;
       HlsMediaChunk lastMediaChunk = mediaChunks.getLast();
       HlsMediaChunk lastCompletedMediaChunk = lastMediaChunk.isLoadCompleted() ? lastMediaChunk
-          : mediaChunks.size() > 1 ? mediaChunks.get(mediaChunks.size() - 2) : null;
+              : mediaChunks.size() > 1 ? mediaChunks.get(mediaChunks.size() - 2) : null;
       if (lastCompletedMediaChunk != null) {
         bufferedPositionUs = Math.max(bufferedPositionUs, lastCompletedMediaChunk.endTimeUs);
       }
       int sampleQueueCount = sampleQueues.size();
       for (int i = 0; i < sampleQueueCount; i++) {
         bufferedPositionUs = Math.max(bufferedPositionUs,
-            sampleQueues.valueAt(i).getLargestQueuedTimestampUs());
+                sampleQueues.valueAt(i).getLargestQueuedTimestampUs());
       }
       return bufferedPositionUs;
     }
@@ -270,7 +272,7 @@ import java.util.LinkedList;
     long largestQueuedTimestampUs = Long.MIN_VALUE;
     for (int i = 0; i < sampleQueues.size(); i++) {
       largestQueuedTimestampUs = Math.max(largestQueuedTimestampUs,
-          sampleQueues.valueAt(i).getLargestQueuedTimestampUs());
+              sampleQueues.valueAt(i).getLargestQueuedTimestampUs());
     }
     return largestQueuedTimestampUs;
   }
@@ -306,13 +308,13 @@ import java.util.LinkedList;
     Format trackFormat = currentChunk.trackFormat;
     if (!trackFormat.equals(downstreamTrackFormat)) {
       eventDispatcher.downstreamFormatChanged(trackType, trackFormat,
-          currentChunk.trackSelectionReason, currentChunk.trackSelectionData,
-          currentChunk.startTimeUs);
+              currentChunk.trackSelectionReason, currentChunk.trackSelectionData,
+              currentChunk.startTimeUs);
     }
     downstreamTrackFormat = trackFormat;
 
     return sampleQueues.valueAt(group).readData(formatHolder, buffer, loadingFinished,
-        lastSeekPositionUs);
+            lastSeekPositionUs);
   }
 
   /* package */ void skipToKeyframeBefore(int group, long timeUs) {
@@ -338,8 +340,8 @@ import java.util.LinkedList;
     }
 
     chunkSource.getNextChunk(mediaChunks.isEmpty() ? null : mediaChunks.getLast(),
-        pendingResetPositionUs != C.TIME_UNSET ? pendingResetPositionUs : positionUs,
-        nextChunkHolder);
+            pendingResetPositionUs != C.TIME_UNSET ? pendingResetPositionUs : positionUs,
+            nextChunkHolder);
     boolean endOfStream = nextChunkHolder.endOfStream;
     Chunk loadable = nextChunkHolder.chunk;
     HlsMasterPlaylist.HlsUrl playlistToLoad = nextChunkHolder.playlist;
@@ -365,8 +367,8 @@ import java.util.LinkedList;
     }
     long elapsedRealtimeMs = loader.startLoading(loadable, this, minLoadableRetryCount);
     eventDispatcher.loadStarted(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
-        loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
-        loadable.endTimeUs, elapsedRealtimeMs);
+            loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
+            loadable.endTimeUs, elapsedRealtimeMs);
     return true;
   }
 
@@ -385,8 +387,8 @@ import java.util.LinkedList;
   public void onLoadCompleted(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs) {
     chunkSource.onChunkLoadCompleted(loadable);
     eventDispatcher.loadCompleted(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
-        loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
-        loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
+            loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
+            loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
     if (!prepared) {
       continueLoading(lastSeekPositionUs);
     } else {
@@ -396,10 +398,10 @@ import java.util.LinkedList;
 
   @Override
   public void onLoadCanceled(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs,
-      boolean released) {
+                             boolean released) {
     eventDispatcher.loadCanceled(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
-        loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
-        loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
+            loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
+            loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
     if (!released) {
       int sampleQueueCount = sampleQueues.size();
       for (int i = 0; i < sampleQueueCount; i++) {
@@ -411,7 +413,7 @@ import java.util.LinkedList;
 
   @Override
   public int onLoadError(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs,
-      IOException error) {
+                         IOException error) {
     long bytesLoaded = loadable.bytesLoaded();
     boolean isMediaChunk = isMediaChunk(loadable);
     boolean cancelable = !isMediaChunk || bytesLoaded == 0;
@@ -427,9 +429,9 @@ import java.util.LinkedList;
       canceled = true;
     }
     eventDispatcher.loadError(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
-        loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
-        loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded(), error,
-        canceled);
+            loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
+            loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded(), error,
+            canceled);
     if (canceled) {
       if (!prepared) {
         continueLoading(lastSeekPositionUs);
@@ -447,9 +449,9 @@ import java.util.LinkedList;
   /**
    * Initializes the wrapper for loading a chunk.
    *
-   * @param chunkUid The chunk's uid.
+   * @param chunkUid       The chunk's uid.
    * @param shouldSpliceIn Whether the samples parsed from the chunk should be spliced into any
-   *     samples already queued to the wrapper.
+   *                       samples already queued to the wrapper.
    */
   public void init(int chunkUid, boolean shouldSpliceIn) {
     upstreamChunkUid = chunkUid;
@@ -563,7 +565,7 @@ import java.util.LinkedList;
         primaryExtractorTrackType = trackType;
         primaryExtractorTrackIndex = i;
       } else if (trackType == primaryExtractorTrackType
-          && primaryExtractorTrackIndex != C.INDEX_UNSET) {
+              && primaryExtractorTrackIndex != C.INDEX_UNSET) {
         // We have multiple tracks of the primary type. We only want an index if there only exists a
         // single track of the primary type, so unset the index again.
         primaryExtractorTrackIndex = C.INDEX_UNSET;
@@ -606,7 +608,7 @@ import java.util.LinkedList;
   /**
    * Enables or disables a specified track group.
    *
-   * @param group The index of the track group.
+   * @param group        The index of the track group.
    * @param enabledState True if the group is being enabled, or false if it's being disabled.
    */
   private void setTrackGroupEnabledState(int group, boolean enabledState) {
@@ -620,7 +622,7 @@ import java.util.LinkedList;
    * level information obtained from the samples.
    *
    * @param containerFormat The container format for which the track format should be derived.
-   * @param sampleFormat A sample format from which to obtain sample level information.
+   * @param sampleFormat    A sample format from which to obtain sample level information.
    * @return The derived track format.
    */
   private static Format deriveFormat(Format containerFormat, Format sampleFormat) {
@@ -635,8 +637,8 @@ import java.util.LinkedList;
       codecs = getVideoCodecs(containerFormat.codecs);
     }
     return sampleFormat.copyWithContainerInfo(containerFormat.id, codecs, containerFormat.bitrate,
-        containerFormat.width, containerFormat.height, containerFormat.selectionFlags,
-        containerFormat.language);
+            containerFormat.width, containerFormat.height, containerFormat.selectionFlags,
+            containerFormat.language);
   }
 
   private boolean isMediaChunk(Chunk chunk) {

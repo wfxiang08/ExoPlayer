@@ -114,6 +114,7 @@ public final class Id3Decoder implements MetadataDecoder {
     int flags = data.readUnsignedByte();
     int framesSize = data.readSynchSafeInt();
 
+    // Id3的版本处理
     if (majorVersion == 2) {
       boolean isCompressed = (flags & 0x40) != 0;
       if (isCompressed) {

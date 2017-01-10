@@ -72,6 +72,7 @@ public final class ParsingLoadable<T> implements Loadable {
    */
   public ParsingLoadable(DataSource dataSource, Uri uri, int type, Parser<T> parser) {
     this.dataSource = dataSource;
+    // 就像解析Html一样，需要一个Base URL
     this.dataSpec = new DataSpec(uri, DataSpec.FLAG_ALLOW_GZIP);
     this.type = type;
     this.parser = parser;
@@ -111,8 +112,11 @@ public final class ParsingLoadable<T> implements Loadable {
     DataSourceInputStream inputStream = new DataSourceInputStream(dataSource, dataSpec);
     try {
       inputStream.open();
+
+      // 如何解析数据呢?
       result = parser.parse(dataSource.getUri(), inputStream);
     } finally {
+      // 读取了多少数据？
       bytesLoaded = inputStream.bytesRead();
       inputStream.close();
     }

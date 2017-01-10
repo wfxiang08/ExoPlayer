@@ -69,6 +69,8 @@ public final class HlsMediaSource implements MediaSource,
   @Override
   public void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener) {
     Assertions.checkState(playlistTracker == null);
+    // 例如:
+    //       manifestUri = https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8
     playlistTracker = new HlsPlaylistTracker(manifestUri, dataSourceFactory, eventDispatcher,
         minLoadableRetryCount, this);
     sourceListener = listener;

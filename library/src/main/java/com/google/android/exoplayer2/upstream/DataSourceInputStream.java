@@ -23,11 +23,17 @@ import java.io.InputStream;
 /**
  * Allows data corresponding to a given {@link DataSpec} to be read from a {@link DataSource} and
  * consumed through an {@link InputStream}.
+ *
+ * 通过: DataSpec来指定资源，通过InputStream接口来消费资源
  */
 public final class DataSourceInputStream extends InputStream {
 
+  // dataSource和dataSpec的关系？
+  // DataSource 通过 DataSpec来读取资源
+  //
   private final DataSource dataSource;
   private final DataSpec dataSpec;
+
   private final byte[] singleByteArray;
 
   private boolean opened = false;
@@ -79,6 +85,8 @@ public final class DataSourceInputStream extends InputStream {
   public int read(byte[] buffer, int offset, int length) throws IOException {
     Assertions.checkState(!closed);
     checkOpened();
+
+
     int bytesRead = dataSource.read(buffer, offset, length);
     if (bytesRead == C.RESULT_END_OF_INPUT) {
       return -1;

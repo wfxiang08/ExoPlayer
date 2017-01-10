@@ -56,6 +56,7 @@ public final class DefaultTsPayloadReaderFactory implements TsPayloadReader.Fact
     return new SparseArray<>();
   }
 
+  // 如何读取Ts的Payloader呢?
   @Override
   public TsPayloadReader createPayloadReader(int streamType, EsInfo esInfo) {
     switch (streamType) {
@@ -73,9 +74,12 @@ public final class DefaultTsPayloadReaderFactory implements TsPayloadReader.Fact
         return new PesReader(new DtsReader(esInfo.language));
       case TsExtractor.TS_STREAM_TYPE_H262:
         return new PesReader(new H262Reader());
+
+      // 默认使用H264
       case TsExtractor.TS_STREAM_TYPE_H264:
         return isSet(FLAG_IGNORE_H264_STREAM) ? null : new PesReader(
             new H264Reader(isSet(FLAG_ALLOW_NON_IDR_KEYFRAMES), isSet(FLAG_DETECT_ACCESS_UNITS)));
+
       case TsExtractor.TS_STREAM_TYPE_H265:
         return new PesReader(new H265Reader());
       case TsExtractor.TS_STREAM_TYPE_SPLICE_INFO:

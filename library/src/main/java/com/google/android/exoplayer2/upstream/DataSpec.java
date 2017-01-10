@@ -71,6 +71,7 @@ public final class DataSpec {
    */
   public final long length;
   /**
+   * 是否有缓存方面的优化呢?
    * A key that uniquely identifies the original stream. Used for cache indexing. May be null if the
    * {@link DataSpec} is not intended to be used in conjunction with a cache.
    */
@@ -158,6 +159,8 @@ public final class DataSpec {
     Assertions.checkArgument(absoluteStreamPosition >= 0);
     Assertions.checkArgument(position >= 0);
     Assertions.checkArgument(length > 0 || length == C.LENGTH_UNSET);
+
+    // 注意: key参数的使用
     this.uri = uri;
     this.postBody = postBody;
     this.absoluteStreamPosition = absoluteStreamPosition;

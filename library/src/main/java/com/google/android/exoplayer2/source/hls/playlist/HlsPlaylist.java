@@ -30,6 +30,7 @@ public abstract class HlsPlaylist {
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({TYPE_MASTER, TYPE_MEDIA})
   public @interface Type {}
+
   public static final int TYPE_MASTER = 0;
   public static final int TYPE_MEDIA = 1;
 

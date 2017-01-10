@@ -21,6 +21,8 @@ import java.util.List;
 
 /**
  * Represents an HLS media playlist.
+ *
+ * m3u8文件
  */
 public final class HlsMediaPlaylist extends HlsPlaylist {
 
@@ -78,16 +80,22 @@ public final class HlsMediaPlaylist extends HlsPlaylist {
   public HlsMediaPlaylist(String baseUri, long startTimeUs, int mediaSequence,
       int version, long targetDurationUs, boolean hasEndTag, boolean hasProgramDateTime,
       Segment initializationSegment, List<Segment> segments) {
+
+    // HlsMasterPlaylist vs. HlsMediaPlaylist
     super(baseUri, HlsPlaylist.TYPE_MEDIA);
-    this.startTimeUs = startTimeUs;
+
+    this.startTimeUs = startTimeUs; // 开始时间
     this.mediaSequence = mediaSequence;
     this.version = version;
     this.targetDurationUs = targetDurationUs;
-    this.hasEndTag = hasEndTag;
+    this.hasEndTag = hasEndTag; // 是否有结束标志
     this.hasProgramDateTime = hasProgramDateTime;
     this.initializationSegment = initializationSegment;
+
+    // 片段
     this.segments = Collections.unmodifiableList(segments);
 
+    // 整个Playlist的持续时间:duration
     if (!segments.isEmpty()) {
       Segment last = segments.get(segments.size() - 1);
       durationUs = last.relativeStartTimeUs + last.durationUs;
@@ -96,6 +104,7 @@ public final class HlsMediaPlaylist extends HlsPlaylist {
     }
   }
 
+  // 两个Playlist如何比较呢?
   public boolean isNewerThan(HlsMediaPlaylist other) {
     return other == null || mediaSequence > other.mediaSequence
         || (mediaSequence == other.mediaSequence && segments.size() > other.segments.size())

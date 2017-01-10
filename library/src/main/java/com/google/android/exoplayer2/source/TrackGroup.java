@@ -29,6 +29,7 @@ import java.util.Arrays;
  * at any given time, however this {@link SampleStream} may adapt between multiple tracks within the
  * group.
  */
+// 内部管理一系列的: Format
 public final class TrackGroup {
 
   /**

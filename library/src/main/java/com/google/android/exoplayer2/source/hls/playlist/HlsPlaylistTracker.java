@@ -36,6 +36,9 @@ import java.util.List;
 /**
  * Tracks playlists linked to a provided playlist url. The provided url might reference an HLS
  * master playlist or a media playlist.
+ *
+ * Track对应一个m3u8文件， 可能是master playlist或者media playlist; 注意不同的概念
+ * 负责m3u8的下载，管理，状态汇报
  */
 public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable<HlsPlaylist>> {
 
@@ -45,7 +48,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
   public interface PrimaryPlaylistListener {
 
     /**
-     * Called when the primary playlist changes.
+     * Called when the primary playlist changes. （主要的playlist?)
      *
      * @param mediaPlaylist The primary playlist new snapshot.
      */
@@ -108,13 +111,18 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
   public HlsPlaylistTracker(Uri initialPlaylistUri, DataSource.Factory dataSourceFactory,
       EventDispatcher eventDispatcher, int minRetryCount,
       PrimaryPlaylistListener primaryPlaylistListener) {
+
     this.initialPlaylistUri = initialPlaylistUri;
     this.dataSourceFactory = dataSourceFactory;
     this.eventDispatcher = eventDispatcher;
     this.minRetryCount = minRetryCount;
     this.primaryPlaylistListener = primaryPlaylistListener;
     listeners = new ArrayList<>();
+
+    // 执行管理 Loadable
     initialPlaylistLoader = new Loader("HlsPlaylistTracker:MasterPlaylist");
+
+    // Parse Playlist文件
     playlistParser = new HlsPlaylistParser();
     playlistBundles = new IdentityHashMap<>();
     playlistRefreshHandler = new Handler();
@@ -142,9 +150,8 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
    * Starts tracking all the playlists related to the provided Uri.
    */
   public void start() {
-    ParsingLoadable<HlsPlaylist> masterPlaylistLoadable = new ParsingLoadable<>(
-        dataSourceFactory.createDataSource(), initialPlaylistUri, C.DATA_TYPE_MANIFEST,
-        playlistParser);
+    ParsingLoadable<HlsPlaylist> masterPlaylistLoadable =
+            new ParsingLoadable<>(dataSourceFactory.createDataSource(), initialPlaylistUri, C.DATA_TYPE_MANIFEST, playlistParser);
     initialPlaylistLoader.startLoading(masterPlaylistLoadable, this, minRetryCount);
   }
 
@@ -218,21 +225,37 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
   @Override
   public void onLoadCompleted(ParsingLoadable<HlsPlaylist> loadable, long elapsedRealtimeMs,
       long loadDurationMs) {
+
+    // m3u8加载完毕
+    // 整个文件已经通过: playlistParser 进行解析
+    // 注意: ParsingLoadable<HlsPlaylist> 的构建方式
     HlsPlaylist result = loadable.getResult();
+
+    // 区分是一级索引还是二级索引
     HlsMasterPlaylist masterPlaylist;
     boolean isMediaPlaylist = result instanceof HlsMediaPlaylist;
+
+    // 如果是二级索引，则需要构建一个虚拟的masterPlaylist
     if (isMediaPlaylist) {
       masterPlaylist = HlsMasterPlaylist.createSingleVariantMasterPlaylist(result.baseUri);
     } else /* result instanceof HlsMasterPlaylist */ {
       masterPlaylist = (HlsMasterPlaylist) result;
     }
     this.masterPlaylist = masterPlaylist;
+
+    // XXX: 默认第一个为: primaryHlsUrl(因此在播放视频的时候刚开始总是不清晰....）
     primaryHlsUrl = masterPlaylist.variants.get(0);
     ArrayList<HlsUrl> urls = new ArrayList<>();
     urls.addAll(masterPlaylist.variants);
     urls.addAll(masterPlaylist.audios);
     urls.addAll(masterPlaylist.subtitles);
+
+    // 每一个URL <--> MediaPlaylistBundle
     createBundles(urls);
+
+    // 如何处理: MediaPlaylistBundle ?
+    // 1. 如果是MediaPlaylist, 则加载完毕
+    // 2. 如果是MastPlaylist, 则加载Playlist
     MediaPlaylistBundle primaryBundle = playlistBundles.get(primaryHlsUrl);
     if (isMediaPlaylist) {
       // We don't need to load the playlist again. We can use the same result.
@@ -393,6 +416,11 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
       this.playlistUrl = playlistUrl;
       lastSnapshotAccessTimeMs = initialLastSnapshotAccessTimeMs;
       mediaPlaylistLoader = new Loader("HlsPlaylistTracker:MediaPlaylist");
+
+      // 注意: Loadable的构建
+      // UriUtil.resolveToUri(masterPlaylist.baseUri, playlistUrl.url)
+      // 可能是从master m3u8触发，获取子的m3u8文件的URL
+      //
       mediaPlaylistLoadable = new ParsingLoadable<>(dataSourceFactory.createDataSource(),
           UriUtil.resolveToUri(masterPlaylist.baseUri, playlistUrl.url), C.DATA_TYPE_MANIFEST,
           playlistParser);
@@ -420,6 +448,8 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     public void onLoadCompleted(ParsingLoadable<HlsPlaylist> loadable, long elapsedRealtimeMs,
         long loadDurationMs) {
       processLoadedPlaylist((HlsMediaPlaylist) loadable.getResult());
+
+      // 通知加载情况
       eventDispatcher.loadCompleted(loadable.dataSpec, C.DATA_TYPE_MANIFEST, elapsedRealtimeMs,
           loadDurationMs, loadable.bytesLoaded());
     }
@@ -427,6 +457,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     @Override
     public void onLoadCanceled(ParsingLoadable<HlsPlaylist> loadable, long elapsedRealtimeMs,
         long loadDurationMs, boolean released) {
+      // 通知加载情况
       eventDispatcher.loadCanceled(loadable.dataSpec, C.DATA_TYPE_MANIFEST, elapsedRealtimeMs,
           loadDurationMs, loadable.bytesLoaded());
     }
@@ -434,12 +465,16 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     @Override
     public int onLoadError(ParsingLoadable<HlsPlaylist> loadable, long elapsedRealtimeMs,
         long loadDurationMs, IOException error) {
+      // 通知加载情况
       boolean isFatal = error instanceof ParserException;
       eventDispatcher.loadError(loadable.dataSpec, C.DATA_TYPE_MANIFEST, elapsedRealtimeMs,
           loadDurationMs, loadable.bytesLoaded(), error, isFatal);
       if (isFatal) {
         return Loader.DONT_RETRY_FATAL;
       }
+
+      // 加载出错了，是否该重试呢?
+      // 如何监控这种情况呢?
       boolean shouldRetry = true;
       if (ChunkedTrackBlacklistUtil.shouldBlacklist(error)) {
         blacklistUntilMs =
@@ -461,8 +496,12 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     // Internal methods.
 
     private void processLoadedPlaylist(HlsMediaPlaylist loadedMediaPlaylist) {
+      // 认为: loadedMediaPlaylist 已经加载完毕，然后呢?
+
       HlsMediaPlaylist oldPlaylist = playlistSnapshot;
       playlistSnapshot = adjustPlaylistTimestamps(oldPlaylist, loadedMediaPlaylist);
+
+
       long refreshDelayUs = C.TIME_UNSET;
       if (oldPlaylist != playlistSnapshot) {
         if (onPlaylistUpdated(playlistUrl, playlistSnapshot)) {

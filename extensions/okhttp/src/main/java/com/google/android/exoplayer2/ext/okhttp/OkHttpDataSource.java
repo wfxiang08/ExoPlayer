@@ -40,7 +40,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 /**
- * An {@link HttpDataSource} that delegates to Square's {@link Call.Factory}.
+ * An {@link HttpDataSource} that delegates to Square's {@link Call.Factory}
+ * 默认的HttpDataSource为: DefaultHttpDataSource, 问题是如何采用这个OkHttpDataSource的extension呢?
  */
 public class OkHttpDataSource implements HttpDataSource {
 
@@ -103,6 +104,7 @@ public class OkHttpDataSource implements HttpDataSource {
   public OkHttpDataSource(Call.Factory callFactory, String userAgent,
       Predicate<String> contentTypePredicate, TransferListener<? super OkHttpDataSource> listener,
       CacheControl cacheControl) {
+
     this.callFactory = Assertions.checkNotNull(callFactory);
     this.userAgent = Assertions.checkNotEmpty(userAgent);
     this.contentTypePredicate = contentTypePredicate;
@@ -150,8 +152,12 @@ public class OkHttpDataSource implements HttpDataSource {
     this.dataSpec = dataSpec;
     this.bytesRead = 0;
     this.bytesSkipped = 0;
+
+    // 如何创建网络请求呢?
     Request request = makeRequest(dataSpec);
+
     try {
+      // 通过callFactory可以共享底部的Sesion, making http2.0可用
       response = callFactory.newCall(request).execute();
       responseByteStream = response.body().byteStream();
     } catch (IOException e) {
@@ -165,8 +171,8 @@ public class OkHttpDataSource implements HttpDataSource {
     if (!response.isSuccessful()) {
       Map<String, List<String>> headers = request.headers().toMultimap();
       closeConnectionQuietly();
-      InvalidResponseCodeException exception = new InvalidResponseCodeException(
-          responseCode, headers, dataSpec);
+      InvalidResponseCodeException exception = new InvalidResponseCodeException(responseCode, headers, dataSpec);
+      // range有问题
       if (responseCode == 416) {
         exception.initCause(new DataSourceException(DataSourceException.POSITION_OUT_OF_RANGE));
       }
@@ -176,6 +182,7 @@ public class OkHttpDataSource implements HttpDataSource {
     // Check for a valid content type.
     MediaType mediaType = response.body().contentType();
     String contentType = mediaType != null ? mediaType.toString() : null;
+    // ContentType格式是否OK？
     if (contentTypePredicate != null && !contentTypePredicate.evaluate(contentType)) {
       closeConnectionQuietly();
       throw new InvalidContentTypeException(contentType, dataSpec);
@@ -184,6 +191,7 @@ public class OkHttpDataSource implements HttpDataSource {
     // If we requested a range starting from a non-zero position and received a 200 rather than a
     // 206, then the server does not support partial requests. We'll need to manually skip to the
     // requested position.
+    // 如何兼容responseCode?
     bytesToSkip = responseCode == 200 && dataSpec.position != 0 ? dataSpec.position : 0;
 
     // Determine the length of the data to be read, after skipping.
@@ -259,20 +267,27 @@ public class OkHttpDataSource implements HttpDataSource {
    * Establishes a connection.
    */
   private Request makeRequest(DataSpec dataSpec) {
+    // 1. 如何创建Request呢?
     long position = dataSpec.position;
     long length = dataSpec.length;
     boolean allowGzip = (dataSpec.flags & DataSpec.FLAG_ALLOW_GZIP) != 0;
 
     HttpUrl url = HttpUrl.parse(dataSpec.uri.toString());
     Request.Builder builder = new Request.Builder().url(url);
+
+    // 2. 缓存控制?
     if (cacheControl != null) {
       builder.cacheControl(cacheControl);
     }
+
+    // 3. 添加Http Header
     synchronized (requestProperties) {
       for (Map.Entry<String, String> property : requestProperties.entrySet()) {
         builder.addHeader(property.getKey(), property.getValue());
       }
     }
+
+    // 4. position & range request
     if (!(position == 0 && length == C.LENGTH_UNSET)) {
       String rangeRequest = "bytes=" + position + "-";
       if (length != C.LENGTH_UNSET) {
@@ -280,6 +295,9 @@ public class OkHttpDataSource implements HttpDataSource {
       }
       builder.addHeader("Range", rangeRequest);
     }
+
+    // 5. 设置User-Agent等参数
+    //    gzip的控制
     builder.addHeader("User-Agent", userAgent);
     if (!allowGzip) {
       builder.addHeader("Accept-Encoding", "identity");
@@ -309,6 +327,7 @@ public class OkHttpDataSource implements HttpDataSource {
       skipBuffer = new byte[4096];
     }
 
+    // 跳过: bytesToSkip
     while (bytesSkipped != bytesToSkip) {
       int readLength = (int) Math.min(bytesToSkip - bytesSkipped, skipBuffer.length);
       int read = responseByteStream.read(skipBuffer, 0, readLength);
@@ -346,6 +365,10 @@ public class OkHttpDataSource implements HttpDataSource {
     if (readLength == 0) {
       return 0;
     }
+
+    // 处理不同的Stream
+    // 有些Stream是有结束标志的；
+    // 有些Stream，例如: 直播，是没有结束标志的
     if (bytesToRead != C.LENGTH_UNSET) {
       long bytesRemaining = bytesToRead - bytesRead;
       if (bytesRemaining == 0) {
@@ -355,6 +378,9 @@ public class OkHttpDataSource implements HttpDataSource {
     }
 
     int read = responseByteStream.read(buffer, offset, readLength);
+
+    // 出错？
+    // 直播可以直接返回-1
     if (read == -1) {
       if (bytesToRead != C.LENGTH_UNSET) {
         // End of stream reached having not read sufficient data.

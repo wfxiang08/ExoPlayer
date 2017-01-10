@@ -64,6 +64,7 @@ public abstract class BaseTrackSelection implements TrackSelection {
     Assertions.checkState(tracks.length > 0);
     this.group = Assertions.checkNotNull(group);
     this.length = tracks.length;
+
     // Set the formats, sorted in order of decreasing bandwidth.
     formats = new Format[length];
     for (int i = 0; i < tracks.length; i++) {
@@ -181,6 +182,7 @@ public abstract class BaseTrackSelection implements TrackSelection {
 
   /**
    * Sorts {@link Format} objects in order of decreasing bandwidth.
+   * 按照带宽从高到低排序
    */
   private static final class DecreasingBandwidthComparator implements Comparator<Format> {
 

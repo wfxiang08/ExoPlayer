@@ -189,6 +189,8 @@ public class DefaultHttpDataSource implements HttpDataSource {
     this.dataSpec = dataSpec;
     this.bytesRead = 0;
     this.bytesSkipped = 0;
+
+    // 每次创建一个新的连接
     try {
       connection = makeConnection(dataSpec);
     } catch (IOException e) {
@@ -345,6 +347,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
     long length = dataSpec.length;
     boolean allowGzip = (dataSpec.flags & DataSpec.FLAG_ALLOW_GZIP) != 0;
 
+    // 扩协议的跳转
     if (!allowCrossProtocolRedirects) {
       // HttpURLConnection disallows cross-protocol redirects, but otherwise performs redirection
       // automatically. This is the behavior we want, so use it.
@@ -391,6 +394,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
    */
   private HttpURLConnection makeConnection(URL url, byte[] postBody, long position,
       long length, boolean allowGzip, boolean followRedirects) throws IOException {
+    // 新建Connection
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setConnectTimeout(connectTimeoutMillis);
     connection.setReadTimeout(readTimeoutMillis);

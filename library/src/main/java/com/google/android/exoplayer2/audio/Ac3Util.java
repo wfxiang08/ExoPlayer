@@ -75,8 +75,10 @@ public final class Ac3Util {
    */
   public static Format parseAc3AnnexFFormat(ParsableByteArray data, String trackId,
       String language, DrmInitData drmInitData) {
+    // Frame Sample Code
     int fscod = (data.readUnsignedByte() & 0xC0) >> 6;
     int sampleRate = SAMPLE_RATE_BY_FSCOD[fscod];
+
     int nextByte = data.readUnsignedByte();
     int channelCount = CHANNEL_COUNT_BY_ACMOD[(nextByte & 0x38) >> 3];
     if ((nextByte & 0x04) != 0) { // lfeon

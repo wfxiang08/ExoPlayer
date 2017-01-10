@@ -125,9 +125,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     shouldAutoPlay = true;
+    // 创建一个HttpDataSource
     mediaDataSourceFactory = buildDataSourceFactory(true);
     mainHandler = new Handler();
+    // 时间窗
     window = new Timeline.Window();
+
     if (CookieHandler.getDefault() != DEFAULT_COOKIE_MANAGER) {
       CookieHandler.setDefault(DEFAULT_COOKIE_MANAGER);
     }
@@ -140,6 +143,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     retryButton = (Button) findViewById(R.id.retry_button);
     retryButton.setOnClickListener(this);
 
+    // 对应的UI部分
     simpleExoPlayerView = (SimpleExoPlayerView) findViewById(R.id.player_view);
     simpleExoPlayerView.setControllerVisibilityListener(this);
     simpleExoPlayerView.requestFocus();
@@ -231,10 +235,12 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
   private void initializePlayer() {
     Intent intent = getIntent();
+
     if (player == null) {
       boolean preferExtensionDecoders = intent.getBooleanExtra(PREFER_EXTENSION_DECODERS, false);
       UUID drmSchemeUuid = intent.hasExtra(DRM_SCHEME_UUID_EXTRA)
           ? UUID.fromString(intent.getStringExtra(DRM_SCHEME_UUID_EXTRA)) : null;
+
       DrmSessionManager<FrameworkMediaCrypto> drmSessionManager = null;
       if (drmSchemeUuid != null) {
         String drmLicenseUrl = intent.getStringExtra(DRM_LICENSE_URL);
@@ -261,26 +267,34 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         }
       }
 
-      @SimpleExoPlayer.ExtensionRendererMode int extensionRendererMode =
+      @SimpleExoPlayer.ExtensionRendererMode
+      int extensionRendererMode =
           ((DemoApplication) getApplication()).useExtensionRenderers()
               ? (preferExtensionDecoders ? SimpleExoPlayer.EXTENSION_RENDERER_MODE_PREFER
                   : SimpleExoPlayer.EXTENSION_RENDERER_MODE_ON)
               : SimpleExoPlayer.EXTENSION_RENDERER_MODE_OFF;
+
+
       TrackSelection.Factory videoTrackSelectionFactory =
           new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
       trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
       trackSelectionHelper = new TrackSelectionHelper(trackSelector, videoTrackSelectionFactory);
+
+
       player = ExoPlayerFactory.newSimpleInstance(this, trackSelector, new DefaultLoadControl(),
           drmSessionManager, extensionRendererMode);
       player.addListener(this);
 
+      // Player能打印出什么样的Logger呢?
       eventLogger = new EventLogger(trackSelector);
       player.addListener(eventLogger);
+
       player.setAudioDebugListener(eventLogger);
       player.setVideoDebugListener(eventLogger);
       player.setId3Output(eventLogger);
 
       simpleExoPlayerView.setPlayer(player);
+
       if (isTimelineStatic) {
         if (playerPosition == C.TIME_UNSET) {
           player.seekToDefaultPosition(playerWindow);
@@ -288,13 +302,18 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
           player.seekTo(playerWindow, playerPosition);
         }
       }
+
+      // 自动播放
       player.setPlayWhenReady(shouldAutoPlay);
       debugViewHelper = new DebugTextViewHelper(player, debugTextView);
       debugViewHelper.start();
       playerNeedsSource = true;
     }
+
     if (playerNeedsSource) {
       String action = intent.getAction();
+
+      // 如何获取? Uri?
       Uri[] uris;
       String[] extensions;
       if (ACTION_VIEW.equals(action)) {
@@ -314,16 +333,21 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         showToast(getString(R.string.unexpected_intent_action, action));
         return;
       }
+
+      // 读取外部设备，需要权限
       if (Util.maybeRequestReadExternalStoragePermission(this, uris)) {
         // The player will be reinitialized if the permission is granted.
         return;
       }
+
+      // uris = [https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8]
       MediaSource[] mediaSources = new MediaSource[uris.length];
       for (int i = 0; i < uris.length; i++) {
         mediaSources[i] = buildMediaSource(uris[i], extensions[i]);
       }
       MediaSource mediaSource = mediaSources.length == 1 ? mediaSources[0]
           : new ConcatenatingMediaSource(mediaSources);
+
       player.prepare(mediaSource, !isTimelineStatic, !isTimelineStatic);
       playerNeedsSource = false;
       updateButtonVisibilities();
@@ -331,8 +355,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
   }
 
   private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
-    int type = Util.inferContentType(!TextUtils.isEmpty(overrideExtension) ? "." + overrideExtension
-        : uri.getLastPathSegment());
+    int type = Util.inferContentType(!TextUtils.isEmpty(overrideExtension) ? "." + overrideExtension : uri.getLastPathSegment());
     switch (type) {
       case C.TYPE_SS:
         return new SsMediaSource(uri, buildDataSourceFactory(false),
@@ -341,6 +364,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
         return new DashMediaSource(uri, buildDataSourceFactory(false),
             new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_HLS:
+        // 如何使用Hls格式的文件呢?
         return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
       case C.TYPE_OTHER:
         return new ExtractorMediaSource(uri, mediaDataSourceFactory, new DefaultExtractorsFactory(),

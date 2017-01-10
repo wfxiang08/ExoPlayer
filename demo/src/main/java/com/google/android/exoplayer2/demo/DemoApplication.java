@@ -41,6 +41,8 @@ public class DemoApplication extends Application {
         buildHttpDataSourceFactory(bandwidthMeter));
   }
 
+  // 如何选择: HttpDataSource呢?
+  // 当前的Demo中使用的是默认的HttpDataSource
   public HttpDataSource.Factory buildHttpDataSourceFactory(DefaultBandwidthMeter bandwidthMeter) {
     return new DefaultHttpDataSourceFactory(userAgent, bandwidthMeter);
   }

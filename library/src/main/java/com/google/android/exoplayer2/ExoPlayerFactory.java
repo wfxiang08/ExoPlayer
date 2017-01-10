@@ -44,6 +44,7 @@ public final class ExoPlayerFactory {
    */
   public static SimpleExoPlayer newSimpleInstance(Context context, TrackSelector trackSelector,
       LoadControl loadControl) {
+    // 工厂类，默认返回：SimpleExoPlayer
     return newSimpleInstance(context, trackSelector, loadControl, null);
   }
 
@@ -102,6 +103,8 @@ public final class ExoPlayerFactory {
       LoadControl loadControl, DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
       @SimpleExoPlayer.ExtensionRendererMode int extensionRendererMode,
       long allowedVideoJoiningTimeMs) {
+
+    // 返回默认的实现
     return new SimpleExoPlayer(context, trackSelector, loadControl, drmSessionManager,
         extensionRendererMode, allowedVideoJoiningTimeMs);
   }
@@ -127,6 +130,7 @@ public final class ExoPlayerFactory {
    */
   public static ExoPlayer newInstance(Renderer[] renderers, TrackSelector trackSelector,
       LoadControl loadControl) {
+    // 这个实现和 SimpleExoPlayer 关系?
     return new ExoPlayerImpl(renderers, trackSelector, loadControl);
   }
 

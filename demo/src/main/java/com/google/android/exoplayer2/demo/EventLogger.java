@@ -18,6 +18,7 @@ package com.google.android.exoplayer2.demo;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.Surface;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ExoPlaybackException;
 import com.google.android.exoplayer2.ExoPlayer;
@@ -46,6 +47,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelection;
 import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
+
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.Locale;
@@ -53,14 +55,16 @@ import java.util.Locale;
 /**
  * Logs player events using {@link Log}.
  */
-/* package */ final class EventLogger implements ExoPlayer.EventListener,
-    AudioRendererEventListener, VideoRendererEventListener, AdaptiveMediaSourceEventListener,
-    ExtractorMediaSource.EventListener, StreamingDrmSessionManager.EventListener,
-    MetadataRenderer.Output {
+/* package */
+final class EventLogger implements ExoPlayer.EventListener,
+        AudioRendererEventListener, VideoRendererEventListener, AdaptiveMediaSourceEventListener,
+        ExtractorMediaSource.EventListener, StreamingDrmSessionManager.EventListener,
+        MetadataRenderer.Output {
 
   private static final String TAG = "EventLogger";
   private static final int MAX_TIMELINE_ITEM_LINES = 3;
   private static final NumberFormat TIME_FORMAT;
+
   static {
     TIME_FORMAT = NumberFormat.getInstance(Locale.US);
     TIME_FORMAT.setMinimumFractionDigits(2);
@@ -90,7 +94,7 @@ import java.util.Locale;
   @Override
   public void onPlayerStateChanged(boolean playWhenReady, int state) {
     Log.d(TAG, "state [" + getSessionTimeString() + ", " + playWhenReady + ", "
-        + getStateString(state) + "]");
+            + getStateString(state) + "]");
   }
 
   @Override
@@ -108,15 +112,15 @@ import java.util.Locale;
     Log.d(TAG, "sourceInfo [periodCount=" + periodCount + ", windowCount=" + windowCount);
     for (int i = 0; i < Math.min(periodCount, MAX_TIMELINE_ITEM_LINES); i++) {
       timeline.getPeriod(i, period);
-      Log.d(TAG, "  " +  "period [" + getTimeString(period.getDurationMs()) + "]");
+      Log.d(TAG, "  " + "period [" + getTimeString(period.getDurationMs()) + "]");
     }
     if (periodCount > MAX_TIMELINE_ITEM_LINES) {
       Log.d(TAG, "  ...");
     }
     for (int i = 0; i < Math.min(windowCount, MAX_TIMELINE_ITEM_LINES); i++) {
       timeline.getWindow(i, window);
-      Log.d(TAG, "  " +  "window [" + getTimeString(window.getDurationMs()) + ", "
-          + window.isSeekable + ", " + window.isDynamic + "]");
+      Log.d(TAG, "  " + "window [" + getTimeString(window.getDurationMs()) + ", "
+              + window.isSeekable + ", " + window.isDynamic + "]");
     }
     if (windowCount > MAX_TIMELINE_ITEM_LINES) {
       Log.d(TAG, "  ...");
@@ -146,15 +150,15 @@ import java.util.Locale;
         for (int groupIndex = 0; groupIndex < rendererTrackGroups.length; groupIndex++) {
           TrackGroup trackGroup = rendererTrackGroups.get(groupIndex);
           String adaptiveSupport = getAdaptiveSupportString(trackGroup.length,
-              mappedTrackInfo.getAdaptiveSupport(rendererIndex, groupIndex, false));
+                  mappedTrackInfo.getAdaptiveSupport(rendererIndex, groupIndex, false));
           Log.d(TAG, "    Group:" + groupIndex + ", adaptive_supported=" + adaptiveSupport + " [");
           for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
             String status = getTrackStatusString(trackSelection, trackGroup, trackIndex);
             String formatSupport = getFormatSupportString(
-                mappedTrackInfo.getTrackFormatSupport(rendererIndex, groupIndex, trackIndex));
+                    mappedTrackInfo.getTrackFormatSupport(rendererIndex, groupIndex, trackIndex));
             Log.d(TAG, "      " + status + " Track:" + trackIndex + ", "
-                + getFormatString(trackGroup.getFormat(trackIndex))
-                + ", supported=" + formatSupport);
+                    + getFormatString(trackGroup.getFormat(trackIndex))
+                    + ", supported=" + formatSupport);
           }
           Log.d(TAG, "    ]");
         }
@@ -183,10 +187,10 @@ import java.util.Locale;
         for (int trackIndex = 0; trackIndex < trackGroup.length; trackIndex++) {
           String status = getTrackStatusString(false);
           String formatSupport = getFormatSupportString(
-              RendererCapabilities.FORMAT_UNSUPPORTED_TYPE);
+                  RendererCapabilities.FORMAT_UNSUPPORTED_TYPE);
           Log.d(TAG, "      " + status + " Track:" + trackIndex + ", "
-              + getFormatString(trackGroup.getFormat(trackIndex))
-              + ", supported=" + formatSupport);
+                  + getFormatString(trackGroup.getFormat(trackIndex))
+                  + ", supported=" + formatSupport);
         }
         Log.d(TAG, "    ]");
       }
@@ -218,14 +222,14 @@ import java.util.Locale;
 
   @Override
   public void onAudioDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-      long initializationDurationMs) {
+                                        long initializationDurationMs) {
     Log.d(TAG, "audioDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
   }
 
   @Override
   public void onAudioInputFormatChanged(Format format) {
     Log.d(TAG, "audioFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
-        + "]");
+            + "]");
   }
 
   @Override
@@ -236,7 +240,7 @@ import java.util.Locale;
   @Override
   public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
     printInternalError("audioTrackUnderrun [" + bufferSize + ", " + bufferSizeMs + ", "
-        + elapsedSinceLastFeedMs + "]", null);
+            + elapsedSinceLastFeedMs + "]", null);
   }
 
   // VideoRendererEventListener
@@ -248,14 +252,14 @@ import java.util.Locale;
 
   @Override
   public void onVideoDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-      long initializationDurationMs) {
+                                        long initializationDurationMs) {
     Log.d(TAG, "videoDecoderInitialized [" + getSessionTimeString() + ", " + decoderName + "]");
   }
 
   @Override
   public void onVideoInputFormatChanged(Format format) {
     Log.d(TAG, "videoFormatChanged [" + getSessionTimeString() + ", " + getFormatString(format)
-        + "]");
+            + "]");
   }
 
   @Override
@@ -270,7 +274,7 @@ import java.util.Locale;
 
   @Override
   public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-      float pixelWidthHeightRatio) {
+                                 float pixelWidthHeightRatio) {
     // Do nothing.
   }
 
@@ -302,30 +306,30 @@ import java.util.Locale;
 
   @Override
   public void onLoadStarted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat,
-      int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
-      long mediaEndTimeMs, long elapsedRealtimeMs) {
+                            int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
+                            long mediaEndTimeMs, long elapsedRealtimeMs) {
     // Do nothing.
   }
 
   @Override
   public void onLoadError(DataSpec dataSpec, int dataType, int trackType, Format trackFormat,
-      int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
-      long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded,
-      IOException error, boolean wasCanceled) {
+                          int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
+                          long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded,
+                          IOException error, boolean wasCanceled) {
     printInternalError("loadError", error);
   }
 
   @Override
   public void onLoadCanceled(DataSpec dataSpec, int dataType, int trackType, Format trackFormat,
-      int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
-      long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+                             int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
+                             long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
     // Do nothing.
   }
 
   @Override
   public void onLoadCompleted(DataSpec dataSpec, int dataType, int trackType, Format trackFormat,
-      int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
-      long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
+                              int trackSelectionReason, Object trackSelectionData, long mediaStartTimeMs,
+                              long mediaEndTimeMs, long elapsedRealtimeMs, long loadDurationMs, long bytesLoaded) {
     // Do nothing.
   }
 
@@ -336,7 +340,7 @@ import java.util.Locale;
 
   @Override
   public void onDownstreamFormatChanged(int trackType, Format trackFormat, int trackSelectionReason,
-      Object trackSelectionData, long mediaTimeMs) {
+                                        Object trackSelectionData, long mediaTimeMs) {
     // Do nothing.
   }
 
@@ -352,26 +356,26 @@ import java.util.Locale;
       if (entry instanceof TxxxFrame) {
         TxxxFrame txxxFrame = (TxxxFrame) entry;
         Log.d(TAG, prefix + String.format("%s: description=%s, value=%s", txxxFrame.id,
-            txxxFrame.description, txxxFrame.value));
+                txxxFrame.description, txxxFrame.value));
       } else if (entry instanceof PrivFrame) {
         PrivFrame privFrame = (PrivFrame) entry;
         Log.d(TAG, prefix + String.format("%s: owner=%s", privFrame.id, privFrame.owner));
       } else if (entry instanceof GeobFrame) {
         GeobFrame geobFrame = (GeobFrame) entry;
         Log.d(TAG, prefix + String.format("%s: mimeType=%s, filename=%s, description=%s",
-            geobFrame.id, geobFrame.mimeType, geobFrame.filename, geobFrame.description));
+                geobFrame.id, geobFrame.mimeType, geobFrame.filename, geobFrame.description));
       } else if (entry instanceof ApicFrame) {
         ApicFrame apicFrame = (ApicFrame) entry;
         Log.d(TAG, prefix + String.format("%s: mimeType=%s, description=%s",
-            apicFrame.id, apicFrame.mimeType, apicFrame.description));
+                apicFrame.id, apicFrame.mimeType, apicFrame.description));
       } else if (entry instanceof TextInformationFrame) {
         TextInformationFrame textInformationFrame = (TextInformationFrame) entry;
         Log.d(TAG, prefix + String.format("%s: description=%s", textInformationFrame.id,
-            textInformationFrame.description));
+                textInformationFrame.description));
       } else if (entry instanceof CommentFrame) {
         CommentFrame commentFrame = (CommentFrame) entry;
         Log.d(TAG, prefix + String.format("%s: language=%s description=%s", commentFrame.id,
-            commentFrame.language, commentFrame.description));
+                commentFrame.language, commentFrame.description));
       } else if (entry instanceof Id3Frame) {
         Id3Frame id3Frame = (Id3Frame) entry;
         Log.d(TAG, prefix + String.format("%s", id3Frame.id));
@@ -387,6 +391,7 @@ import java.util.Locale;
     return timeMs == C.TIME_UNSET ? "?" : TIME_FORMAT.format((timeMs) / 1000f);
   }
 
+  // 播放器的播放状态
   private static String getStateString(int state) {
     switch (state) {
       case ExoPlayer.STATE_BUFFERING:
@@ -402,6 +407,8 @@ import java.util.Locale;
     }
   }
 
+
+  // 是否支持指定的Format，返回"YES", "NO", ...
   private static String getFormatSupportString(int formatSupport) {
     switch (formatSupport) {
       case RendererCapabilities.FORMAT_HANDLED:
@@ -433,6 +440,7 @@ import java.util.Locale;
     }
   }
 
+  // 关注下面的指标， 是什么意思呢?
   private static String getFormatString(Format format) {
     if (format == null) {
       return "null";
@@ -461,9 +469,9 @@ import java.util.Locale;
   }
 
   private static String getTrackStatusString(TrackSelection selection, TrackGroup group,
-      int trackIndex) {
+                                             int trackIndex) {
     return getTrackStatusString(selection != null && selection.getTrackGroup() == group
-        && selection.indexOf(trackIndex) != C.INDEX_UNSET);
+            && selection.indexOf(trackIndex) != C.INDEX_UNSET);
   }
 
   private static String getTrackStatusString(boolean enabled) {

@@ -232,14 +232,12 @@ public final class C {
    * @see MediaCodec#VIDEO_SCALING_MODE_SCALE_TO_FIT
    */
   @SuppressWarnings("InlinedApi")
-  public static final int VIDEO_SCALING_MODE_SCALE_TO_FIT =
-      MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT;
+  public static final int VIDEO_SCALING_MODE_SCALE_TO_FIT = MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT;
   /**
    * @see MediaCodec#VIDEO_SCALING_MODE_SCALE_TO_FIT
    */
   @SuppressWarnings("InlinedApi")
-  public static final int VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING =
-      MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
+  public static final int VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING = MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING;
   /**
    * A default video scaling mode for {@link MediaCodec}-based {@link Renderer}s.
    */

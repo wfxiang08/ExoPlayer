@@ -139,6 +139,7 @@ public final class Loader implements LoaderErrorThrower {
    * @param threadName A name for the loader's thread.
    */
   public Loader(String threadName) {
+    // 包含一个线程 Executor
     this.downloadExecutorService = Util.newSingleThreadExecutor(threadName);
   }
 
@@ -161,6 +162,8 @@ public final class Loader implements LoaderErrorThrower {
     Looper looper = Looper.myLooper();
     Assertions.checkState(looper != null);
     long startTimeMs = SystemClock.elapsedRealtime();
+
+    // 创建一个LoadTask
     new LoadTask<>(looper, loadable, callback, defaultMinRetryCount, startTimeMs).start(0);
     return startTimeMs;
   }
@@ -292,6 +295,8 @@ public final class Loader implements LoaderErrorThrower {
         if (!loadable.isLoadCanceled()) {
           TraceUtil.beginSection("load:" + loadable.getClass().getSimpleName());
           try {
+            // 线程的核心:
+            // 和Loadable配合，处理Cancel, release, load等逻辑
             loadable.load();
           } finally {
             TraceUtil.endSection();

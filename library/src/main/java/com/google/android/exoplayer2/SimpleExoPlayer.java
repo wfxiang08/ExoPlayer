@@ -27,6 +27,7 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.TextureView;
+
 import com.google.android.exoplayer2.audio.AudioCapabilities;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.audio.AudioTrack;
@@ -46,6 +47,7 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
@@ -67,21 +69,21 @@ public class SimpleExoPlayer implements ExoPlayer {
     /**
      * Called each time there's a change in the size of the video being rendered.
      *
-     * @param width The video width in pixels.
-     * @param height The video height in pixels.
+     * @param width                    The video width in pixels.
+     * @param height                   The video height in pixels.
      * @param unappliedRotationDegrees For videos that require a rotation, this is the clockwise
-     *     rotation in degrees that the application should apply for the video for it to be rendered
-     *     in the correct orientation. This value will always be zero on API levels 21 and above,
-     *     since the renderer will apply all necessary rotations internally. On earlier API levels
-     *     this is not possible. Applications that use {@link android.view.TextureView} can apply
-     *     the rotation by calling {@link android.view.TextureView#setTransform}. Applications that
-     *     do not expect to encounter rotated videos can safely ignore this parameter.
-     * @param pixelWidthHeightRatio The width to height ratio of each pixel. For the normal case
-     *     of square pixels this will be equal to 1.0. Different values are indicative of anamorphic
-     *     content.
+     *                                 rotation in degrees that the application should apply for the video for it to be rendered
+     *                                 in the correct orientation. This value will always be zero on API levels 21 and above,
+     *                                 since the renderer will apply all necessary rotations internally. On earlier API levels
+     *                                 this is not possible. Applications that use {@link android.view.TextureView} can apply
+     *                                 the rotation by calling {@link android.view.TextureView#setTransform}. Applications that
+     *                                 do not expect to encounter rotated videos can safely ignore this parameter.
+     * @param pixelWidthHeightRatio    The width to height ratio of each pixel. For the normal case
+     *                                 of square pixels this will be equal to 1.0. Different values are indicative of anamorphic
+     *                                 content.
      */
     void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-        float pixelWidthHeightRatio);
+                            float pixelWidthHeightRatio);
 
     /**
      * Called when a frame is rendered for the first time since setting the surface, and when a
@@ -96,7 +98,9 @@ public class SimpleExoPlayer implements ExoPlayer {
    */
   @Retention(RetentionPolicy.SOURCE)
   @IntDef({EXTENSION_RENDERER_MODE_OFF, EXTENSION_RENDERER_MODE_ON, EXTENSION_RENDERER_MODE_PREFER})
-  public @interface ExtensionRendererMode {}
+  public @interface ExtensionRendererMode {
+  }
+
   /**
    * Do not allow use of extension renderers.
    */
@@ -149,17 +153,20 @@ public class SimpleExoPlayer implements ExoPlayer {
   private PlaybackParamsHolder playbackParamsHolder;
 
   protected SimpleExoPlayer(Context context, TrackSelector trackSelector, LoadControl loadControl,
-      DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
-      @ExtensionRendererMode int extensionRendererMode, long allowedVideoJoiningTimeMs) {
+                            DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
+                            @ExtensionRendererMode int extensionRendererMode, long allowedVideoJoiningTimeMs) {
+
+    // 初始化
     mainHandler = new Handler();
     componentListener = new ComponentListener();
 
     // Build the renderers.
     ArrayList<Renderer> renderersList = new ArrayList<>();
     buildRenderers(context, mainHandler, drmSessionManager, extensionRendererMode,
-        allowedVideoJoiningTimeMs, renderersList);
+            allowedVideoJoiningTimeMs, renderersList);
     renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
+    // 获取video/audio renders的数量
     // Obtain counts of video and audio renderers.
     int videoRendererCount = 0;
     int audioRendererCount = 0;
@@ -183,6 +190,7 @@ public class SimpleExoPlayer implements ExoPlayer {
     videoScalingMode = C.VIDEO_SCALING_MODE_DEFAULT;
 
     // Build the player and associated objects.
+    // 实际的播放器，其他的工作都是为player准备
     player = new ExoPlayerImpl(renderers, trackSelector, loadControl);
   }
 
@@ -197,11 +205,12 @@ public class SimpleExoPlayer implements ExoPlayer {
   public void setVideoScalingMode(@C.VideoScalingMode int videoScalingMode) {
     this.videoScalingMode = videoScalingMode;
     ExoPlayerMessage[] messages = new ExoPlayerMessage[videoRendererCount];
+
+    // 每一个Render构建一个Message
     int count = 0;
     for (Renderer renderer : renderers) {
       if (renderer.getTrackType() == C.TRACK_TYPE_VIDEO) {
-        messages[count++] = new ExoPlayerMessage(renderer, C.MSG_SET_SCALING_MODE,
-            videoScalingMode);
+        messages[count++] = new ExoPlayerMessage(renderer, C.MSG_SET_SCALING_MODE, videoScalingMode);
       }
     }
     player.sendMessages(messages);
@@ -210,7 +219,9 @@ public class SimpleExoPlayer implements ExoPlayer {
   /**
    * Returns the video scaling mode.
    */
-  public @C.VideoScalingMode int getVideoScalingMode() {
+  public
+  @C.VideoScalingMode
+  int getVideoScalingMode() {
     return videoScalingMode;
   }
 
@@ -314,7 +325,9 @@ public class SimpleExoPlayer implements ExoPlayer {
   /**
    * Returns the stream type for audio playback.
    */
-  public @C.StreamType int getAudioStreamType() {
+  public
+  @C.StreamType
+  int getAudioStreamType() {
     return audioStreamType;
   }
 
@@ -450,8 +463,8 @@ public class SimpleExoPlayer implements ExoPlayer {
   }
 
   /**
-   * @deprecated Use {@link #setMetadataOutput(MetadataRenderer.Output)} instead.
    * @param output The output.
+   * @deprecated Use {@link #setMetadataOutput(MetadataRenderer.Output)} instead.
    */
   @Deprecated
   public void setId3Output(MetadataRenderer.Output output) {
@@ -619,13 +632,19 @@ public class SimpleExoPlayer implements ExoPlayer {
   // Renderer building.
 
   private void buildRenderers(Context context, Handler mainHandler,
-      DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
-      @ExtensionRendererMode int extensionRendererMode, long allowedVideoJoiningTimeMs,
-      ArrayList<Renderer> out) {
+                              DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
+                              @ExtensionRendererMode int extensionRendererMode, long allowedVideoJoiningTimeMs,
+                              ArrayList<Renderer> out) {
+
+    // 创建各种Renders
+    // Video
+    // Audio
     buildVideoRenderers(context, mainHandler, drmSessionManager, extensionRendererMode,
-        componentListener, allowedVideoJoiningTimeMs, out);
+            componentListener, allowedVideoJoiningTimeMs, out);
     buildAudioRenderers(context, mainHandler, drmSessionManager, extensionRendererMode,
-        componentListener, out);
+            componentListener, out);
+
+    // 文本& MetaData, 其他的Render
     buildTextRenderers(context, mainHandler, extensionRendererMode, componentListener, out);
     buildMetadataRenderers(context, mainHandler, extensionRendererMode, componentListener, out);
     buildMiscellaneousRenderers(context, mainHandler, extensionRendererMode, out);
@@ -634,23 +653,25 @@ public class SimpleExoPlayer implements ExoPlayer {
   /**
    * Builds video renderers for use by the player.
    *
-   * @param context The {@link Context} associated with the player.
-   * @param mainHandler A handler associated with the main thread's looper.
-   * @param drmSessionManager An optional {@link DrmSessionManager}. May be null if the player will
-   * not be used for DRM protected playbacks.
-   * @param extensionRendererMode The extension renderer mode.
-   * @param eventListener An event listener.
+   * @param context                   The {@link Context} associated with the player.
+   * @param mainHandler               A handler associated with the main thread's looper.
+   * @param drmSessionManager         An optional {@link DrmSessionManager}. May be null if the player will
+   *                                  not be used for DRM protected playbacks.
+   * @param extensionRendererMode     The extension renderer mode.
+   * @param eventListener             An event listener.
    * @param allowedVideoJoiningTimeMs The maximum duration in milliseconds for which video renderers
-   *     can attempt to seamlessly join an ongoing playback.
-   * @param out An array to which the built renderers should be appended.
+   *                                  can attempt to seamlessly join an ongoing playback.
+   * @param out                       An array to which the built renderers should be appended.
    */
   protected void buildVideoRenderers(Context context, Handler mainHandler,
-      DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
-      @ExtensionRendererMode int extensionRendererMode, VideoRendererEventListener eventListener,
-      long allowedVideoJoiningTimeMs, ArrayList<Renderer> out) {
+                                     DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
+                                     @ExtensionRendererMode int extensionRendererMode,
+                                     VideoRendererEventListener eventListener,
+                                     long allowedVideoJoiningTimeMs, ArrayList<Renderer> out) {
+
     out.add(new MediaCodecVideoRenderer(context, MediaCodecSelector.DEFAULT,
-        allowedVideoJoiningTimeMs, drmSessionManager, false, mainHandler, eventListener,
-        MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY));
+            allowedVideoJoiningTimeMs, drmSessionManager, false, mainHandler, eventListener,
+            MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY));
 
     if (extensionRendererMode == EXTENSION_RENDERER_MODE_OFF) {
       return;
@@ -660,14 +681,16 @@ public class SimpleExoPlayer implements ExoPlayer {
       extensionRendererIndex--;
     }
 
+    // Extension可能有，也可能没有
     try {
-      Class<?> clazz =
-          Class.forName("com.google.android.exoplayer2.ext.vp9.LibvpxVideoRenderer");
+      Class<?> clazz = Class.forName("com.google.android.exoplayer2.ext.vp9.LibvpxVideoRenderer");
       Constructor<?> constructor = clazz.getConstructor(boolean.class, long.class, Handler.class,
-          VideoRendererEventListener.class, int.class);
+              VideoRendererEventListener.class, int.class);
+
       Renderer renderer = (Renderer) constructor.newInstance(true, allowedVideoJoiningTimeMs,
-          mainHandler, componentListener, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY);
+              mainHandler, componentListener, MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY);
       out.add(extensionRendererIndex++, renderer);
+
       Log.i(TAG, "Loaded LibvpxVideoRenderer.");
     } catch (ClassNotFoundException e) {
       // Expected if the app was built without the extension.
@@ -679,20 +702,20 @@ public class SimpleExoPlayer implements ExoPlayer {
   /**
    * Builds audio renderers for use by the player.
    *
-   * @param context The {@link Context} associated with the player.
-   * @param mainHandler A handler associated with the main thread's looper.
-   * @param drmSessionManager An optional {@link DrmSessionManager}. May be null if the player will
-   * not be used for DRM protected playbacks.
+   * @param context               The {@link Context} associated with the player.
+   * @param mainHandler           A handler associated with the main thread's looper.
+   * @param drmSessionManager     An optional {@link DrmSessionManager}. May be null if the player will
+   *                              not be used for DRM protected playbacks.
    * @param extensionRendererMode The extension renderer mode.
-   * @param eventListener An event listener.
-   * @param out An array to which the built renderers should be appended.
+   * @param eventListener         An event listener.
+   * @param out                   An array to which the built renderers should be appended.
    */
   protected void buildAudioRenderers(Context context, Handler mainHandler,
-      DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
-      @ExtensionRendererMode int extensionRendererMode, AudioRendererEventListener eventListener,
-      ArrayList<Renderer> out) {
+                                     DrmSessionManager<FrameworkMediaCrypto> drmSessionManager,
+                                     @ExtensionRendererMode int extensionRendererMode, AudioRendererEventListener eventListener,
+                                     ArrayList<Renderer> out) {
     out.add(new MediaCodecAudioRenderer(MediaCodecSelector.DEFAULT, drmSessionManager, true,
-        mainHandler, eventListener, AudioCapabilities.getCapabilities(context)));
+            mainHandler, eventListener, AudioCapabilities.getCapabilities(context)));
 
     if (extensionRendererMode == EXTENSION_RENDERER_MODE_OFF) {
       return;
@@ -702,11 +725,12 @@ public class SimpleExoPlayer implements ExoPlayer {
       extensionRendererIndex--;
     }
 
+    // 可以选用不同的AudioRender
     try {
       Class<?> clazz =
-          Class.forName("com.google.android.exoplayer2.ext.opus.LibopusAudioRenderer");
+              Class.forName("com.google.android.exoplayer2.ext.opus.LibopusAudioRenderer");
       Constructor<?> constructor = clazz.getConstructor(Handler.class,
-          AudioRendererEventListener.class);
+              AudioRendererEventListener.class);
       Renderer renderer = (Renderer) constructor.newInstance(mainHandler, componentListener);
       out.add(extensionRendererIndex++, renderer);
       Log.i(TAG, "Loaded LibopusAudioRenderer.");
@@ -718,9 +742,9 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     try {
       Class<?> clazz =
-          Class.forName("com.google.android.exoplayer2.ext.flac.LibflacAudioRenderer");
+              Class.forName("com.google.android.exoplayer2.ext.flac.LibflacAudioRenderer");
       Constructor<?> constructor = clazz.getConstructor(Handler.class,
-          AudioRendererEventListener.class);
+              AudioRendererEventListener.class);
       Renderer renderer = (Renderer) constructor.newInstance(mainHandler, componentListener);
       out.add(extensionRendererIndex++, renderer);
       Log.i(TAG, "Loaded LibflacAudioRenderer.");
@@ -732,9 +756,9 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     try {
       Class<?> clazz =
-          Class.forName("com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer");
+              Class.forName("com.google.android.exoplayer2.ext.ffmpeg.FfmpegAudioRenderer");
       Constructor<?> constructor = clazz.getConstructor(Handler.class,
-          AudioRendererEventListener.class);
+              AudioRendererEventListener.class);
       Renderer renderer = (Renderer) constructor.newInstance(mainHandler, componentListener);
       out.add(extensionRendererIndex++, renderer);
       Log.i(TAG, "Loaded FfmpegAudioRenderer.");
@@ -748,43 +772,43 @@ public class SimpleExoPlayer implements ExoPlayer {
   /**
    * Builds text renderers for use by the player.
    *
-   * @param context The {@link Context} associated with the player.
-   * @param mainHandler A handler associated with the main thread's looper.
+   * @param context               The {@link Context} associated with the player.
+   * @param mainHandler           A handler associated with the main thread's looper.
    * @param extensionRendererMode The extension renderer mode.
-   * @param output An output for the renderers.
-   * @param out An array to which the built renderers should be appended.
+   * @param output                An output for the renderers.
+   * @param out                   An array to which the built renderers should be appended.
    */
   protected void buildTextRenderers(Context context, Handler mainHandler,
-      @ExtensionRendererMode int extensionRendererMode, TextRenderer.Output output,
-      ArrayList<Renderer> out) {
+                                    @ExtensionRendererMode int extensionRendererMode, TextRenderer.Output output,
+                                    ArrayList<Renderer> out) {
     out.add(new TextRenderer(output, mainHandler.getLooper()));
   }
 
   /**
    * Builds metadata renderers for use by the player.
    *
-   * @param context The {@link Context} associated with the player.
-   * @param mainHandler A handler associated with the main thread's looper.
+   * @param context               The {@link Context} associated with the player.
+   * @param mainHandler           A handler associated with the main thread's looper.
    * @param extensionRendererMode The extension renderer mode.
-   * @param output An output for the renderers.
-   * @param out An array to which the built renderers should be appended.
+   * @param output                An output for the renderers.
+   * @param out                   An array to which the built renderers should be appended.
    */
   protected void buildMetadataRenderers(Context context, Handler mainHandler,
-      @ExtensionRendererMode int extensionRendererMode, MetadataRenderer.Output output,
-      ArrayList<Renderer> out) {
+                                        @ExtensionRendererMode int extensionRendererMode, MetadataRenderer.Output output,
+                                        ArrayList<Renderer> out) {
     out.add(new MetadataRenderer(output, mainHandler.getLooper(), new Id3Decoder()));
   }
 
   /**
    * Builds any miscellaneous renderers used by the player.
    *
-   * @param context The {@link Context} associated with the player.
-   * @param mainHandler A handler associated with the main thread's looper.
+   * @param context               The {@link Context} associated with the player.
+   * @param mainHandler           A handler associated with the main thread's looper.
    * @param extensionRendererMode The extension renderer mode.
-   * @param out An array to which the built renderers should be appended.
+   * @param out                   An array to which the built renderers should be appended.
    */
   protected void buildMiscellaneousRenderers(Context context, Handler mainHandler,
-      @ExtensionRendererMode int extensionRendererMode, ArrayList<Renderer> out) {
+                                             @ExtensionRendererMode int extensionRendererMode, ArrayList<Renderer> out) {
     // Do nothing.
   }
 
@@ -830,8 +854,8 @@ public class SimpleExoPlayer implements ExoPlayer {
   }
 
   private final class ComponentListener implements VideoRendererEventListener,
-      AudioRendererEventListener, TextRenderer.Output, MetadataRenderer.Output,
-      SurfaceHolder.Callback, TextureView.SurfaceTextureListener {
+          AudioRendererEventListener, TextRenderer.Output, MetadataRenderer.Output,
+          SurfaceHolder.Callback, TextureView.SurfaceTextureListener {
 
     // VideoRendererEventListener implementation
 
@@ -845,10 +869,10 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     @Override
     public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs,
-        long initializationDurationMs) {
+                                          long initializationDurationMs) {
       if (videoDebugListener != null) {
         videoDebugListener.onVideoDecoderInitialized(decoderName, initializedTimestampMs,
-            initializationDurationMs);
+                initializationDurationMs);
       }
     }
 
@@ -869,14 +893,14 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     @Override
     public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-        float pixelWidthHeightRatio) {
+                                   float pixelWidthHeightRatio) {
       if (videoListener != null) {
         videoListener.onVideoSizeChanged(width, height, unappliedRotationDegrees,
-            pixelWidthHeightRatio);
+                pixelWidthHeightRatio);
       }
       if (videoDebugListener != null) {
         videoDebugListener.onVideoSizeChanged(width, height, unappliedRotationDegrees,
-            pixelWidthHeightRatio);
+                pixelWidthHeightRatio);
       }
     }
 
@@ -919,10 +943,10 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     @Override
     public void onAudioDecoderInitialized(String decoderName, long initializedTimestampMs,
-        long initializationDurationMs) {
+                                          long initializationDurationMs) {
       if (audioDebugListener != null) {
         audioDebugListener.onAudioDecoderInitialized(decoderName, initializedTimestampMs,
-            initializationDurationMs);
+                initializationDurationMs);
       }
     }
 
@@ -936,7 +960,7 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     @Override
     public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs,
-        long elapsedSinceLastFeedMs) {
+                                     long elapsedSinceLastFeedMs) {
       if (audioDebugListener != null) {
         audioDebugListener.onAudioTrackUnderrun(bufferSize, bufferSizeMs, elapsedSinceLastFeedMs);
       }

@@ -104,6 +104,8 @@ import com.google.android.exoplayer2.video.MediaCodecVideoRenderer;
  * <li>Injected player components may use additional background threads. For example a MediaSource
  * may use a background thread to load data. These are implementation specific.</li>
  * </ul>
+ * 整个系统的核心就是这个ExoPlayer接口
+ * 存在三个实现: {@link SimpleExoPlayer} {@link DebugSimpleExoPlayer} {@link ExoPlayerImpl}
  */
 public interface ExoPlayer {
 

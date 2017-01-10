@@ -76,6 +76,7 @@ public final class DefaultHttpDataSourceFactory implements Factory {
 
   @Override
   public DefaultHttpDataSource createDataSource() {
+    // 返回默认的HttpDataSource
     return new DefaultHttpDataSource(userAgent, null, listener, connectTimeoutMillis,
         readTimeoutMillis, allowCrossProtocolRedirects);
   }

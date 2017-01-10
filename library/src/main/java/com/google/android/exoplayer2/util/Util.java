@@ -417,6 +417,7 @@ public final class Util {
   public static <T> int binarySearchFloor(List<? extends Comparable<? super T>> list, T value,
       boolean inclusive, boolean stayInBounds) {
     int index = Collections.binarySearch(list, value);
+    // - (-(insertion point) - 1 + 2) ==> insertion point - 1
     if (index < 0) {
       index = -(index + 2);
     } else {

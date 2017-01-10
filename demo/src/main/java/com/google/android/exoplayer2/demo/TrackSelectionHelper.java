@@ -44,7 +44,7 @@ import java.util.Locale;
 /**
  * Helper class for displaying track selection dialogs.
  */
-/* package */ final class TrackSelectionHelper implements View.OnClickListener,
+final class TrackSelectionHelper implements View.OnClickListener,
     DialogInterface.OnClickListener {
 
   private static final TrackSelection.Factory FIXED_FACTORY = new FixedTrackSelection.Factory();

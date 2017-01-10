@@ -17,6 +17,7 @@ package com.google.android.exoplayer2.source.hls;
 
 import android.net.Uri;
 import android.os.SystemClock;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.extractor.TimestampAdjuster;
@@ -35,6 +36,7 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.util.UriUtil;
 import com.google.android.exoplayer2.util.Util;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -43,7 +45,8 @@ import java.util.Locale;
 /**
  * Source of Hls (possibly adaptive) chunks.
  */
-/* package */ class HlsChunkSource {
+/* package */
+class HlsChunkSource {
 
   /**
    * Chunk holder that allows the scheduling of retries.
@@ -82,7 +85,11 @@ import java.util.Locale;
 
   private final DataSource dataSource;
   private final TimestampAdjusterProvider timestampAdjusterProvider;
+
+  // 不同的分辨率情况下的variants
   private final HlsUrl[] variants;
+
+  // 当前的播放列表
   private final HlsPlaylistTracker playlistTracker;
   private final TrackGroup trackGroup;
 
@@ -101,20 +108,21 @@ import java.util.Locale;
   private TrackSelection trackSelection;
 
   /**
-   * @param playlistTracker The {@link HlsPlaylistTracker} from which to obtain media playlists.
-   * @param variants The available variants.
-   * @param dataSource A {@link DataSource} suitable for loading the media data.
+   * @param playlistTracker           The {@link HlsPlaylistTracker} from which to obtain media playlists.
+   * @param variants                  The available variants.
+   * @param dataSource                A {@link DataSource} suitable for loading the media data.
    * @param timestampAdjusterProvider A provider of {@link TimestampAdjuster} instances. If
-   *     multiple {@link HlsChunkSource}s are used for a single playback, they should all share the
-   *     same provider.
+   *                                  multiple {@link HlsChunkSource}s are used for a single playback, they should all share the
+   *                                  same provider.
    */
   public HlsChunkSource(HlsPlaylistTracker playlistTracker, HlsUrl[] variants,
-      DataSource dataSource, TimestampAdjusterProvider timestampAdjusterProvider) {
+                        DataSource dataSource, TimestampAdjusterProvider timestampAdjusterProvider) {
     this.playlistTracker = playlistTracker;
     this.variants = variants;
     this.dataSource = dataSource;
     this.timestampAdjusterProvider = timestampAdjusterProvider;
 
+    // variants --> variantFormats --> TrackGroup
     Format[] variantFormats = new Format[variants.length];
     int[] initialTrackSelection = new int[variants.length];
     for (int i = 0; i < variants.length; i++) {
@@ -122,6 +130,7 @@ import java.util.Locale;
       initialTrackSelection[i] = i;
     }
     trackGroup = new TrackGroup(variantFormats);
+
     trackSelection = new InitializationTrackSelection(trackGroup, initialTrackSelection);
   }
 
@@ -164,7 +173,7 @@ import java.util.Locale;
    * Sets whether this chunk source is responsible for initializing timestamp adjusters.
    *
    * @param isTimestampMaster True if this chunk source is responsible for initializing timestamp
-   *     adjusters.
+   *                          adjusters.
    */
   public void setIsTimestampMaster(boolean isTimestampMaster) {
     this.isTimestampMaster = isTimestampMaster;
@@ -178,22 +187,23 @@ import java.util.Locale;
    * the end of the stream has not been reached, {@link HlsChunkHolder#playlist} is set to
    * contain the {@link HlsUrl} that refers to the playlist that needs refreshing.
    *
-   * @param previous The most recently loaded media chunk.
+   * @param previous           The most recently loaded media chunk.
    * @param playbackPositionUs The current playback position. If {@code previous} is null then this
-   *     parameter is the position from which playback is expected to start (or restart) and hence
-   *     should be interpreted as a seek position.
-   * @param out A holder to populate.
+   *                           parameter is the position from which playback is expected to start (or restart) and hence
+   *                           should be interpreted as a seek position.
+   * @param out                A holder to populate.
    */
   public void getNextChunk(HlsMediaChunk previous, long playbackPositionUs, HlsChunkHolder out) {
-    int oldVariantIndex = previous == null ? C.INDEX_UNSET
-        : trackGroup.indexOf(previous.trackFormat);
+
+    int oldVariantIndex = previous == null ? C.INDEX_UNSET : trackGroup.indexOf(previous.trackFormat);
     // Use start time of the previous chunk rather than its end time because switching format will
     // require downloading overlapping segments.
-    long bufferedDurationUs = previous == null ? 0
-        : Math.max(0, previous.startTimeUs - playbackPositionUs);
+    long bufferedDurationUs = previous == null ? 0 : Math.max(0, previous.startTimeUs - playbackPositionUs);
 
     // Select the variant.
     trackSelection.updateSelectedTrack(bufferedDurationUs);
+
+    // 选择variant
     int newVariantIndex = trackSelection.getSelectedIndexInTrackGroup();
 
     boolean switchingVariant = oldVariantIndex != newVariantIndex;
@@ -207,14 +217,16 @@ import java.util.Locale;
     // Select the chunk.
     int chunkMediaSequence;
     if (previous == null || switchingVariant) {
+      // 第一次下载，或者切换: Variants
       long targetPositionUs = previous == null ? playbackPositionUs : previous.startTimeUs;
+
       if (!mediaPlaylist.hasEndTag && targetPositionUs > mediaPlaylist.getEndTimeUs()) {
         // If the playlist is too old to contain the chunk, we need to refresh it.
         chunkMediaSequence = mediaPlaylist.mediaSequence + mediaPlaylist.segments.size();
       } else {
         chunkMediaSequence = Util.binarySearchFloor(mediaPlaylist.segments,
-            targetPositionUs - mediaPlaylist.startTimeUs, true,
-            !playlistTracker.isLive() || previous == null) + mediaPlaylist.mediaSequence;
+                targetPositionUs - mediaPlaylist.startTimeUs, true,
+                !playlistTracker.isLive() || previous == null) + mediaPlaylist.mediaSequence;
         if (chunkMediaSequence < mediaPlaylist.mediaSequence && previous != null) {
           // We try getting the next chunk without adapting in case that's the reason for falling
           // behind the live window.
@@ -245,12 +257,13 @@ import java.util.Locale;
     HlsMediaPlaylist.Segment segment = mediaPlaylist.segments.get(chunkIndex);
 
     // Check if encryption is specified.
+    // 暂时认为都是非加密的
     if (segment.isEncrypted) {
       Uri keyUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.encryptionKeyUri);
       if (!keyUri.equals(encryptionKeyUri)) {
         // Encryption is specified and the key has changed.
         out.chunk = newEncryptionKeyChunk(keyUri, segment.encryptionIV, newVariantIndex,
-            trackSelection.getSelectionReason(), trackSelection.getSelectionData());
+                trackSelection.getSelectionReason(), trackSelection.getSelectionData());
         return;
       }
       if (!Util.areEqual(segment.encryptionIV, encryptionIvString)) {
@@ -265,23 +278,25 @@ import java.util.Locale;
     if (initSegment != null) {
       Uri initSegmentUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, initSegment.url);
       initDataSpec = new DataSpec(initSegmentUri, initSegment.byterangeOffset,
-          initSegment.byterangeLength, null);
+              initSegment.byterangeLength, null);
     }
 
     // Compute start time of the next chunk.
     long startTimeUs = mediaPlaylist.startTimeUs + segment.relativeStartTimeUs;
     TimestampAdjuster timestampAdjuster = timestampAdjusterProvider.getAdjuster(
-        segment.discontinuitySequenceNumber, startTimeUs);
+            segment.discontinuitySequenceNumber, startTimeUs);
 
     // Configure the data source and spec for the chunk.
     Uri chunkUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.url);
     DataSpec dataSpec = new DataSpec(chunkUri, segment.byterangeOffset, segment.byterangeLength,
-        null);
+            null);
+
+    // 选择一个MediaChunk
     out.chunk = new HlsMediaChunk(dataSource, dataSpec, initDataSpec, variants[newVariantIndex],
-        trackSelection.getSelectionReason(), trackSelection.getSelectionData(),
-        startTimeUs, startTimeUs + segment.durationUs, chunkMediaSequence,
-        segment.discontinuitySequenceNumber, isTimestampMaster, timestampAdjuster, previous,
-        encryptionKey, encryptionIv);
+            trackSelection.getSelectionReason(), trackSelection.getSelectionData(),
+            startTimeUs, startTimeUs + segment.durationUs, chunkMediaSequence,
+            segment.discontinuitySequenceNumber, isTimestampMaster, timestampAdjuster, previous,
+            encryptionKey, encryptionIv);
   }
 
   /**
@@ -291,11 +306,14 @@ import java.util.Locale;
    * @param chunk The chunk whose load has been completed.
    */
   public void onChunkLoadCompleted(Chunk chunk) {
+
+    // 加载完毕，是否需要解密呢?
+    // 暂不考虑这个逻辑
     if (chunk instanceof EncryptionKeyChunk) {
       EncryptionKeyChunk encryptionKeyChunk = (EncryptionKeyChunk) chunk;
       scratchSpace = encryptionKeyChunk.getDataHolder();
       setEncryptionData(encryptionKeyChunk.dataSpec.uri, encryptionKeyChunk.iv,
-          encryptionKeyChunk.getResult());
+              encryptionKeyChunk.getResult());
     }
   }
 
@@ -303,20 +321,20 @@ import java.util.Locale;
    * Called when the {@link HlsSampleStreamWrapper} encounters an error loading a chunk obtained
    * from this source.
    *
-   * @param chunk The chunk whose load encountered the error.
+   * @param chunk      The chunk whose load encountered the error.
    * @param cancelable Whether the load can be canceled.
-   * @param error The error.
+   * @param error      The error.
    * @return Whether the load should be canceled.
    */
   public boolean onChunkLoadError(Chunk chunk, boolean cancelable, IOException error) {
     return cancelable && ChunkedTrackBlacklistUtil.maybeBlacklistTrack(trackSelection,
-        trackSelection.indexOf(trackGroup.indexOf(chunk.trackFormat)), error);
+            trackSelection.indexOf(trackGroup.indexOf(chunk.trackFormat)), error);
   }
 
   /**
    * Called when a playlist is blacklisted.
    *
-   * @param url The url that references the blacklisted playlist.
+   * @param url         The url that references the blacklisted playlist.
    * @param blacklistMs The amount of milliseconds for which the playlist was blacklisted.
    */
   public void onPlaylistBlacklisted(HlsUrl url, long blacklistMs) {
@@ -332,10 +350,10 @@ import java.util.Locale;
   // Private methods.
 
   private EncryptionKeyChunk newEncryptionKeyChunk(Uri keyUri, String iv, int variantIndex,
-      int trackSelectionReason, Object trackSelectionData) {
+                                                   int trackSelectionReason, Object trackSelectionData) {
     DataSpec dataSpec = new DataSpec(keyUri, 0, C.LENGTH_UNSET, null, DataSpec.FLAG_ALLOW_GZIP);
     return new EncryptionKeyChunk(dataSource, dataSpec, variants[variantIndex].format,
-        trackSelectionReason, trackSelectionData, scratchSpace, iv);
+            trackSelectionReason, trackSelectionData, scratchSpace, iv);
   }
 
   private void setEncryptionData(Uri keyUri, String iv, byte[] secretKey) {
@@ -350,7 +368,7 @@ import java.util.Locale;
     byte[] ivDataWithPadding = new byte[16];
     int offset = ivData.length > 16 ? ivData.length - 16 : 0;
     System.arraycopy(ivData, offset, ivDataWithPadding, ivDataWithPadding.length - ivData.length
-        + offset, ivData.length - offset);
+            + offset, ivData.length - offset);
 
     encryptionKeyUri = keyUri;
     encryptionKey = secretKey;
@@ -374,6 +392,7 @@ import java.util.Locale;
 
     private int selectedIndex;
 
+    // 如何选择初始的Track呢?
     public InitializationTrackSelection(TrackGroup group, int[] tracks) {
       super(group, tracks);
       selectedIndex = indexOf(group.getFormat(0));
@@ -382,9 +401,13 @@ import java.util.Locale;
     @Override
     public void updateSelectedTrack(long bufferedDurationUs) {
       long nowMs = SystemClock.elapsedRealtime();
+
+      // 如果当前的Track OK，则直接返回
       if (!isBlacklisted(selectedIndex, nowMs)) {
         return;
       }
+
+      // 选择一个新的Index
       // Try from lowest bitrate to highest.
       for (int i = length - 1; i >= 0; i--) {
         if (!isBlacklisted(i, nowMs)) {
@@ -420,9 +443,9 @@ import java.util.Locale;
     private byte[] result;
 
     public EncryptionKeyChunk(DataSource dataSource, DataSpec dataSpec, Format trackFormat,
-        int trackSelectionReason, Object trackSelectionData, byte[] scratchSpace, String iv) {
+                              int trackSelectionReason, Object trackSelectionData, byte[] scratchSpace, String iv) {
       super(dataSource, dataSpec, C.DATA_TYPE_DRM, trackFormat, trackSelectionReason,
-          trackSelectionData, scratchSpace);
+              trackSelectionData, scratchSpace);
       this.iv = iv;
     }
 

@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 
 /**
  * HLS playlists parsing logic.
+ * 如何m3u8文件呢?
  */
 public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlaylist> {
 
@@ -96,13 +97,27 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
     Queue<String> extraLines = new LinkedList<>();
     String line;
+
+    // 这样的一个文件该如何分析呢？
+    //    #EXTM3U
+    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+    //    hls-360p/hls-360p.m3u8
+    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+    //    hls-480p/hls-480p.m3u8
+    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+    //    hls-720p/hls-720p.m3u8
+
     try {
       while ((line = reader.readLine()) != null) {
+        // 读取一行数据
         line = line.trim();
         if (line.isEmpty()) {
           // Do nothing.
         } else if (line.startsWith(TAG_STREAM_INF)) {
           extraLines.add(line);
+
+          // 一个m3u8文件有两种格式: master & playlist
+          // 通过个别的tag即可对两者进行区分
           return parseMasterPlaylist(new LineIterator(extraLines, reader), uri.toString());
         } else if (line.startsWith(TAG_TARGET_DURATION)
             || line.startsWith(TAG_MEDIA_SEQUENCE)
@@ -126,7 +141,7 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
 
   private static HlsMasterPlaylist parseMasterPlaylist(LineIterator iterator, String baseUri)
       throws IOException {
-    ArrayList<HlsMasterPlaylist.HlsUrl> variants = new ArrayList<>();
+    ArrayList<HlsMasterPlaylist.HlsUrl> variants = new ArrayList<>(); // 不同分辨率，不同网络条件下的处理
     ArrayList<HlsMasterPlaylist.HlsUrl> audios = new ArrayList<>();
     ArrayList<HlsMasterPlaylist.HlsUrl> subtitles = new ArrayList<>();
     Format muxedAudioFormat = null;
@@ -134,8 +149,12 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
 
     String line;
     while (iterator.hasNext()) {
+      // 一行一行遍历
       line = iterator.next();
+
       if (line.startsWith(TAG_MEDIA)) {
+        // #EXT-X-MEDIA
+        // #EXTINF:3.008656,
         @C.SelectionFlags int selectionFlags = parseSelectionFlags(line);
         String uri = parseOptionalStringAttr(line, REGEX_URI);
         String name = parseStringAttr(line, REGEX_NAME);
@@ -169,9 +188,16 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
             break;
         }
       } else if (line.startsWith(TAG_STREAM_INF)) {
+        // #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+        // hls-360p/hls-360p.m3u8
+        // 解析出带宽
         int bitrate = parseIntAttr(line, REGEX_BANDWIDTH);
+        // 编码器
         String codecs = parseOptionalStringAttr(line, REGEX_CODECS);
+        // 分辨率: 可选
         String resolutionString = parseOptionalStringAttr(line, REGEX_RESOLUTION);
+
+        // 解析分辨率(可选)
         int width;
         int height;
         if (resolutionString != null) {
@@ -191,9 +217,13 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
         String name = Integer.toString(variants.size());
         Format format = Format.createVideoContainerFormat(name, MimeTypes.APPLICATION_M3U8, null,
             codecs, bitrate, width, height, Format.NO_VALUE, null);
+
+        // 二级: m3u8文件
         variants.add(new HlsMasterPlaylist.HlsUrl(name, line, format, null, null, null));
       }
     }
+
+    // 返回Master
     return new HlsMasterPlaylist(baseUri, variants, audios, subtitles, muxedAudioFormat,
         muxedCaptionFormat);
   }
@@ -205,6 +235,7 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
         | (parseBooleanAttribute(line, REGEX_AUTOSELECT, false) ? C.SELECTION_FLAG_AUTOSELECT : 0);
   }
 
+  // 解析普通的Playlist文件
   private static HlsMediaPlaylist parseMediaPlaylist(LineIterator iterator, String baseUri)
       throws IOException {
     int mediaSequence = 0;
@@ -248,11 +279,13 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
         mediaSequence = parseIntAttr(line, REGEX_MEDIA_SEQUENCE);
         segmentMediaSequence = mediaSequence;
       } else if (line.startsWith(TAG_VERSION)) {
+        // 版本
         version = parseIntAttr(line, REGEX_VERSION);
       } else if (line.startsWith(TAG_MEDIA_DURATION)) {
-        segmentDurationUs =
-            (long) (parseDoubleAttr(line, REGEX_MEDIA_DURATION) * C.MICROS_PER_SECOND);
+        // 持续时间
+        segmentDurationUs = (long) (parseDoubleAttr(line, REGEX_MEDIA_DURATION) * C.MICROS_PER_SECOND);
       } else if (line.startsWith(TAG_KEY)) {
+        // 秘钥
         String method = parseStringAttr(line, REGEX_METHOD);
         isEncrypted = METHOD_AES128.equals(method);
         if (isEncrypted) {
@@ -263,6 +296,7 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
           encryptionIV = null;
         }
       } else if (line.startsWith(TAG_BYTERANGE)) {
+        // byte-range
         String byteRange = parseStringAttr(line, REGEX_BYTERANGE);
         String[] splitByteRange = byteRange.split("@");
         segmentByteRangeLength = Long.parseLong(splitByteRange[0]);
@@ -280,6 +314,7 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
           playlistStartTimeUs = programDatetimeUs - segmentStartTimeUs;
         }
       } else if (!line.startsWith("#")) {
+        // 应该就是普通的ts的URL了
         String segmentEncryptionIV;
         if (!isEncrypted) {
           segmentEncryptionIV = null;
@@ -292,11 +327,14 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
         if (segmentByteRangeLength == C.LENGTH_UNSET) {
           segmentByteRangeOffset = 0;
         }
+
+        // 获取segments的信息
         segments.add(new Segment(line, segmentDurationUs, discontinuitySequenceNumber,
             segmentStartTimeUs, isEncrypted, encryptionKeyUri, segmentEncryptionIV,
             segmentByteRangeOffset, segmentByteRangeLength));
         segmentStartTimeUs += segmentDurationUs;
         segmentDurationUs = 0;
+
         if (segmentByteRangeLength != C.LENGTH_UNSET) {
           segmentByteRangeOffset += segmentByteRangeLength;
         }
@@ -345,6 +383,7 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
     return Pattern.compile(attribute + "=(" + BOOLEAN_FALSE + "|" + BOOLEAN_TRUE + ")");
   }
 
+  // 将reader和extralines组成的结构按照行遍历
   private static class LineIterator {
 
     private final BufferedReader reader;

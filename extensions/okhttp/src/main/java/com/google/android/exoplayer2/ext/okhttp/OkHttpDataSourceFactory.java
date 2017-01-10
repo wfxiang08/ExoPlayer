@@ -23,6 +23,7 @@ import okhttp3.Call;
 
 /**
  * A {@link Factory} that produces {@link OkHttpDataSource}.
+ * 实现了HttpDataSource#factory
  */
 public final class OkHttpDataSourceFactory implements Factory {
 
@@ -59,6 +60,7 @@ public final class OkHttpDataSourceFactory implements Factory {
 
   @Override
   public OkHttpDataSource createDataSource() {
+    // 创建OKHttpDataSource
     return new OkHttpDataSource(callFactory, userAgent, null, listener, cacheControl);
   }
 

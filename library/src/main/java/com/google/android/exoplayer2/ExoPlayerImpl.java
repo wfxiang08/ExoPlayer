@@ -20,6 +20,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.util.Log;
+
 import com.google.android.exoplayer2.ExoPlayerImplInternal.PlaybackInfo;
 import com.google.android.exoplayer2.ExoPlayerImplInternal.SourceInfo;
 import com.google.android.exoplayer2.ExoPlayerImplInternal.TrackInfo;
@@ -30,12 +31,15 @@ import com.google.android.exoplayer2.trackselection.TrackSelectionArray;
 import com.google.android.exoplayer2.trackselection.TrackSelector;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Util;
+
 import java.util.concurrent.CopyOnWriteArraySet;
 
 /**
  * An {@link ExoPlayer} implementation. Instances can be obtained from {@link ExoPlayerFactory}.
+ * <p>
+ * 实际的播放器实现
  */
-/* package */ final class ExoPlayerImpl implements ExoPlayer {
+final class ExoPlayerImpl implements ExoPlayer {
 
   private static final String TAG = "ExoPlayerImpl";
 
@@ -68,20 +72,25 @@ import java.util.concurrent.CopyOnWriteArraySet;
   /**
    * Constructs an instance. Must be called from a thread that has an associated {@link Looper}.
    *
-   * @param renderers The {@link Renderer}s that will be used by the instance.
+   * @param renderers     The {@link Renderer}s that will be used by the instance.
    * @param trackSelector The {@link TrackSelector} that will be used by the instance.
-   * @param loadControl The {@link LoadControl} that will be used by the instance.
+   * @param loadControl   The {@link LoadControl} that will be used by the instance.
    */
   @SuppressLint("HandlerLeak")
   public ExoPlayerImpl(Renderer[] renderers, TrackSelector trackSelector, LoadControl loadControl) {
+
     Log.i(TAG, "Init " + ExoPlayerLibraryInfo.VERSION + " [" + Util.DEVICE_DEBUG_INFO + "]");
     Assertions.checkState(renderers.length > 0);
+
     this.renderers = Assertions.checkNotNull(renderers);
     this.trackSelector = Assertions.checkNotNull(trackSelector);
+
     this.playWhenReady = false;
     this.playbackState = STATE_IDLE;
+
     this.listeners = new CopyOnWriteArraySet<>();
     emptyTrackSelections = new TrackSelectionArray(new TrackSelection[renderers.length]);
+
     timeline = Timeline.EMPTY;
     window = new Timeline.Window();
     period = new Timeline.Period();
@@ -95,7 +104,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
     };
     playbackInfo = new ExoPlayerImplInternal.PlaybackInfo(0, 0);
     internalPlayer = new ExoPlayerImplInternal(renderers, trackSelector, loadControl, playWhenReady,
-        eventHandler, playbackInfo, this);
+            eventHandler, playbackInfo, this);
   }
 
   @Override
@@ -138,6 +147,8 @@ import java.util.concurrent.CopyOnWriteArraySet;
         }
       }
     }
+
+    // 内部播放器
     internalPlayer.prepare(mediaSource, resetPosition);
   }
 
@@ -268,7 +279,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
     long bufferedPosition = getBufferedPosition();
     long duration = getDuration();
     return (bufferedPosition == C.TIME_UNSET || duration == C.TIME_UNSET) ? 0
-        : (int) (duration == 0 ? 100 : (bufferedPosition * 100) / duration);
+            : (int) (duration == 0 ? 100 : (bufferedPosition * 100) / duration);
   }
 
   @Override
