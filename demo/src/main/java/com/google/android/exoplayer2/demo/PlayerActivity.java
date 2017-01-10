@@ -354,6 +354,9 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
     }
   }
 
+  //
+  //  mediaDataSourceFactory 和网路相关，可以控制缓存；最终作为播放器的数据源： MediaSource
+  //
   private MediaSource buildMediaSource(Uri uri, String overrideExtension) {
     int type = Util.inferContentType(!TextUtils.isEmpty(overrideExtension) ? "." + overrideExtension : uri.getLastPathSegment());
     switch (type) {
