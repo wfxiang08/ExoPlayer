@@ -117,6 +117,7 @@ public final class ExoPlayerFactory {
    * @param trackSelector The {@link TrackSelector} that will be used by the instance.
    */
   public static ExoPlayer newInstance(Renderer[] renderers, TrackSelector trackSelector) {
+    // 使用默认的LoadControl
     return newInstance(renderers, trackSelector, new DefaultLoadControl());
   }
 
@@ -130,6 +131,7 @@ public final class ExoPlayerFactory {
    */
   public static ExoPlayer newInstance(Renderer[] renderers, TrackSelector trackSelector,
       LoadControl loadControl) {
+
     // 这个实现和 SimpleExoPlayer 关系?
     return new ExoPlayerImpl(renderers, trackSelector, loadControl);
   }

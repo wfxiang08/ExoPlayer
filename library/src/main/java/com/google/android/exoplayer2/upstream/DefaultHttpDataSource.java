@@ -191,6 +191,8 @@ public class DefaultHttpDataSource implements HttpDataSource {
     this.bytesSkipped = 0;
 
     // 每次创建一个新的连接
+    // Http2.0 vs. Non-2.0
+    // 是否能服用Connection
     try {
       connection = makeConnection(dataSpec);
     } catch (IOException e) {

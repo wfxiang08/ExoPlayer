@@ -57,6 +57,8 @@ import java.util.List;
 /**
  * An {@link ExoPlayer} implementation that uses default {@link Renderer} components. Instances can
  * be obtained from {@link ExoPlayerFactory}.
+ *
+ * SimpleExoPlayer vs. ExoPlayerImpl 两者的关系是什么样的呢?
  */
 @TargetApi(16)
 public class SimpleExoPlayer implements ExoPlayer {
@@ -135,8 +137,10 @@ public class SimpleExoPlayer implements ExoPlayer {
 
   private Surface surface;
   private boolean ownsSurface;
+
   @C.VideoScalingMode
-  private int videoScalingMode;
+  private int videoScalingMode; // 视频播放如何Scale?
+
   private SurfaceHolder surfaceHolder;
   private TextureView textureView;
   private TextRenderer.Output textOutput;
@@ -147,8 +151,10 @@ public class SimpleExoPlayer implements ExoPlayer {
   private DecoderCounters videoDecoderCounters;
   private DecoderCounters audioDecoderCounters;
   private int audioSessionId;
+
   @C.StreamType
   private int audioStreamType;
+
   private float audioVolume;
   private PlaybackParamsHolder playbackParamsHolder;
 
@@ -164,6 +170,8 @@ public class SimpleExoPlayer implements ExoPlayer {
     ArrayList<Renderer> renderersList = new ArrayList<>();
     buildRenderers(context, mainHandler, drmSessionManager, extensionRendererMode,
             allowedVideoJoiningTimeMs, renderersList);
+
+    // 这些Renders是否都是必须的呢?
     renderers = renderersList.toArray(new Renderer[renderersList.size()]);
 
     // 获取video/audio renders的数量
@@ -191,6 +199,8 @@ public class SimpleExoPlayer implements ExoPlayer {
 
     // Build the player and associated objects.
     // 实际的播放器，其他的工作都是为player准备
+    // trackSelector 选择Track的策略
+    // loadControl 流量控制策略
     player = new ExoPlayerImpl(renderers, trackSelector, loadControl);
   }
 
@@ -669,6 +679,7 @@ public class SimpleExoPlayer implements ExoPlayer {
                                      VideoRendererEventListener eventListener,
                                      long allowedVideoJoiningTimeMs, ArrayList<Renderer> out) {
 
+    // 默认的Render
     out.add(new MediaCodecVideoRenderer(context, MediaCodecSelector.DEFAULT,
             allowedVideoJoiningTimeMs, drmSessionManager, false, mainHandler, eventListener,
             MAX_DROPPED_VIDEO_FRAME_COUNT_TO_NOTIFY));

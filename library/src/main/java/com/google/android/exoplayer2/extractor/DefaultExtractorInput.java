@@ -44,13 +44,19 @@ public final class DefaultExtractorInput implements ExtractorInput {
    */
   public DefaultExtractorInput(DataSource dataSource, long position, long length) {
     this.dataSource = dataSource;
+
+    // 从dataSource指定的区域读取数据
     this.position = position;
     this.streamLength = length;
+
+    // 8k的Buffer
     peekBuffer = new byte[8 * 1024];
   }
 
   @Override
   public int read(byte[] target, int offset, int length) throws IOException, InterruptedException {
+    // 首选从peekBuffer读取数据
+    // 如果读取失败，在从DataSource读取数据
     int bytesRead = readFromPeekBuffer(target, offset, length);
     if (bytesRead == 0) {
       bytesRead = readFromDataSource(target, offset, length, 0, true);
@@ -62,10 +68,13 @@ public final class DefaultExtractorInput implements ExtractorInput {
   @Override
   public boolean readFully(byte[] target, int offset, int length, boolean allowEndOfInput)
       throws IOException, InterruptedException {
+
+    // 尽量保证length读取完毕
     int bytesRead = readFromPeekBuffer(target, offset, length);
     while (bytesRead < length && bytesRead != C.RESULT_END_OF_INPUT) {
       bytesRead = readFromDataSource(target, offset, length, bytesRead, allowEndOfInput);
     }
+
     commitBytesRead(bytesRead);
     return bytesRead != C.RESULT_END_OF_INPUT;
   }
@@ -123,7 +132,11 @@ public final class DefaultExtractorInput implements ExtractorInput {
   @Override
   public boolean advancePeekPosition(int length, boolean allowEndOfInput)
       throws IOException, InterruptedException {
+
+    // 确保peekBuffer足够大
     ensureSpaceForPeek(length);
+
+    // 读取足够多的数据到peekBuffer中
     int bytesPeeked = Math.min(peekBufferLength - peekBufferPosition, length);
     while (bytesPeeked < length) {
       bytesPeeked = readFromDataSource(peekBuffer, peekBufferPosition, length, bytesPeeked,
@@ -218,6 +231,8 @@ public final class DefaultExtractorInput implements ExtractorInput {
   private void updatePeekBuffer(int bytesConsumed) {
     peekBufferLength -= bytesConsumed;
     peekBufferPosition = 0;
+
+    // 将peekBuffer整理好
     System.arraycopy(peekBuffer, bytesConsumed, peekBuffer, 0, peekBufferLength);
   }
 
@@ -251,6 +266,8 @@ public final class DefaultExtractorInput implements ExtractorInput {
       }
       throw new EOFException();
     }
+
+    // 返回已经读取的数据
     return bytesAlreadyRead + bytesRead;
   }
 
@@ -260,6 +277,7 @@ public final class DefaultExtractorInput implements ExtractorInput {
    * @param bytesRead The number of bytes read.
    */
   private void commitBytesRead(int bytesRead) {
+    // 更新position
     if (bytesRead != C.RESULT_END_OF_INPUT) {
       position += bytesRead;
     }

@@ -96,6 +96,7 @@ final class ExoPlayerImpl implements ExoPlayer {
     period = new Timeline.Period();
     trackGroups = TrackGroupArray.EMPTY;
     trackSelections = emptyTrackSelections;
+
     eventHandler = new Handler() {
       @Override
       public void handleMessage(Message msg) {
@@ -103,6 +104,8 @@ final class ExoPlayerImpl implements ExoPlayer {
       }
     };
     playbackInfo = new ExoPlayerImplInternal.PlaybackInfo(0, 0);
+
+    // 初始的状态
     internalPlayer = new ExoPlayerImplInternal(renderers, trackSelector, loadControl, playWhenReady,
             eventHandler, playbackInfo, this);
   }
@@ -122,14 +125,17 @@ final class ExoPlayerImpl implements ExoPlayer {
     return playbackState;
   }
 
+  // 开始准备播放
   @Override
   public void prepare(MediaSource mediaSource) {
     prepare(mediaSource, true, true);
   }
 
+  // 开始准备播放
   @Override
   public void prepare(MediaSource mediaSource, boolean resetPosition, boolean resetState) {
     if (resetState) {
+      // 重置状态
       if (!timeline.isEmpty() || manifest != null) {
         timeline = Timeline.EMPTY;
         manifest = null;
@@ -149,6 +155,8 @@ final class ExoPlayerImpl implements ExoPlayer {
     }
 
     // 内部播放器
+    // 例如: HlsMediaSource
+    //
     internalPlayer.prepare(mediaSource, resetPosition);
   }
 
@@ -157,6 +165,8 @@ final class ExoPlayerImpl implements ExoPlayer {
     if (this.playWhenReady != playWhenReady) {
       this.playWhenReady = playWhenReady;
       internalPlayer.setPlayWhenReady(playWhenReady);
+
+      // 通知listeners
       for (EventListener listener : listeners) {
         listener.onPlayerStateChanged(playWhenReady, playbackState);
       }

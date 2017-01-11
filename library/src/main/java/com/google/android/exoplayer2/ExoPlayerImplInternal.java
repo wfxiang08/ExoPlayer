@@ -214,12 +214,16 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     handler = new Handler(internalPlaybackThread.getLooper(), this);
   }
 
+  //
+  // MediaSource 有外部程序准备，例如:
+  //
   public void prepare(MediaSource mediaSource, boolean resetPosition) {
     handler.obtainMessage(MSG_PREPARE, resetPosition ? 1 : 0, 0, mediaSource)
             .sendToTarget();
   }
 
   public void setPlayWhenReady(boolean playWhenReady) {
+    // 开始播放
     handler.obtainMessage(MSG_SET_PLAY_WHEN_READY, playWhenReady ? 1 : 0, 0).sendToTarget();
   }
 
@@ -306,6 +310,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     try {
       switch (msg.what) {
         case MSG_PREPARE: {
+          // 通过消息减少调用混乱
           prepareInternal((MediaSource) msg.obj, msg.arg1 != 0);
           return true;
         }
@@ -389,14 +394,18 @@ final class ExoPlayerImplInternal implements Handler.Callback,
 
   private void prepareInternal(MediaSource mediaSource, boolean resetPosition) {
     resetInternal(true);
+
+    // 清空loadControl的状态
     loadControl.onPrepared();
     if (resetPosition) {
       playbackInfo = new PlaybackInfo(0, C.TIME_UNSET);
     }
+
     // 内部准备
     // 设置mediaSource
     this.mediaSource = mediaSource;
     mediaSource.prepareSource(player, true, this);
+
     setState(ExoPlayer.STATE_BUFFERING);
     handler.sendEmptyMessage(MSG_DO_SOME_WORK);
   }
@@ -404,14 +413,17 @@ final class ExoPlayerImplInternal implements Handler.Callback,
   private void setPlayWhenReadyInternal(boolean playWhenReady) throws ExoPlaybackException {
     rebuffering = false;
     this.playWhenReady = playWhenReady;
+
     if (!playWhenReady) {
       stopRenderers();
       updatePlaybackPositions();
     } else {
+      // 如果Reader，则开始Renders
       if (state == ExoPlayer.STATE_READY) {
         startRenderers();
         handler.sendEmptyMessage(MSG_DO_SOME_WORK);
       } else if (state == ExoPlayer.STATE_BUFFERING) {
+
         handler.sendEmptyMessage(MSG_DO_SOME_WORK);
       }
     }
@@ -1288,10 +1300,15 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     maybeContinueLoading();
   }
 
+  // 播放器是否继续加载数据呢?
   private void maybeContinueLoading() {
+
     long nextLoadPositionUs = !loadingPeriodHolder.prepared ? 0
             : loadingPeriodHolder.mediaPeriod.getNextLoadPositionUs();
+
+
     if (nextLoadPositionUs == C.TIME_END_OF_SOURCE) {
+      // 文件加载完毕，则停止loading
       setIsLoading(false);
     } else {
       long loadingPeriodPositionUs = loadingPeriodHolder.toPeriodTime(rendererPositionUs);
@@ -1434,6 +1451,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       this.startPositionUs = startPositionUs;
       sampleStreams = new SampleStream[renderers.length];
       mayRetainStreamFlags = new boolean[renderers.length];
+
       mediaPeriod = mediaSource.createPeriod(periodIndex, loadControl.getAllocator(),
               startPositionUs);
     }

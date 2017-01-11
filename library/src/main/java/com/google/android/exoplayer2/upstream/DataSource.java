@@ -20,7 +20,10 @@ import com.google.android.exoplayer2.C;
 import java.io.IOException;
 
 /**
+ * 可读取的资源信息
  * A component from which streams of data can be read.
+ *
+ * FileDataSource：基于本地文件展示了DataSpec的意义，用法，以及DataSource接口的实现
  */
 public interface DataSource {
 

@@ -275,12 +275,18 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
               : SimpleExoPlayer.EXTENSION_RENDERER_MODE_OFF;
 
 
+      // 自适应的TrackSelector算法
       TrackSelection.Factory videoTrackSelectionFactory =
           new AdaptiveVideoTrackSelection.Factory(BANDWIDTH_METER);
+
+      // 作为一个Component来注入
       trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
+
+
       trackSelectionHelper = new TrackSelectionHelper(trackSelector, videoTrackSelectionFactory);
 
 
+      // LoadControl策略的依赖注入
       player = ExoPlayerFactory.newSimpleInstance(this, trackSelector, new DefaultLoadControl(),
           drmSessionManager, extensionRendererMode);
       player.addListener(this);

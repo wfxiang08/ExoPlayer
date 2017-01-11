@@ -35,6 +35,7 @@ public interface HttpDataSource extends DataSource {
    */
   interface Factory extends DataSource.Factory {
 
+    // Factory的接口也升级了
     @Override
     HttpDataSource createDataSource();
 
@@ -140,6 +141,8 @@ public interface HttpDataSource extends DataSource {
 
   }
 
+  // Override的作用:
+  // throws的异常类型做了具体化
   @Override
   long open(DataSpec dataSpec) throws HttpDataSourceException;
 

@@ -43,6 +43,7 @@ import java.util.Locale;
 
 /**
  * Helper class for displaying track selection dialogs.
+ *
  */
 final class TrackSelectionHelper implements View.OnClickListener,
     DialogInterface.OnClickListener {

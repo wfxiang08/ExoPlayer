@@ -17,6 +17,7 @@ package com.google.android.exoplayer2.upstream;
 
 /**
  * A source of allocations.
+ * 分配管理Allocation, 带有offset的buffer
  */
 public interface Allocator {
 

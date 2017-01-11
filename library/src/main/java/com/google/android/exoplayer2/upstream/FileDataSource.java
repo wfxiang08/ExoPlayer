@@ -16,7 +16,9 @@
 package com.google.android.exoplayer2.upstream;
 
 import android.net.Uri;
+
 import com.google.android.exoplayer2.C;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -58,11 +60,19 @@ public final class FileDataSource implements DataSource {
   @Override
   public long open(DataSpec dataSpec) throws FileDataSourceException {
     try {
+      // dataSpec中如何记录文件信息
       uri = dataSpec.uri;
+
+      // 随机访问的文件
       file = new RandomAccessFile(dataSpec.uri.getPath(), "r");
+
+      // seek
       file.seek(dataSpec.position);
+
+      // 文件(逻辑意义上的文件)
+      // min(file.length - dataSpec.position, dataSpec.length)
       bytesRemaining = dataSpec.length == C.LENGTH_UNSET ? file.length() - dataSpec.position
-          : dataSpec.length;
+              : dataSpec.length;
       if (bytesRemaining < 0) {
         throw new EOFException();
       }
@@ -85,6 +95,7 @@ public final class FileDataSource implements DataSource {
     } else if (bytesRemaining == 0) {
       return C.RESULT_END_OF_INPUT;
     } else {
+      // 读取给定长度的数据
       int bytesRead;
       try {
         bytesRead = file.read(buffer, offset, (int) Math.min(bytesRemaining, readLength));

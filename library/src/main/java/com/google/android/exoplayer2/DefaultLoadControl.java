@@ -23,6 +23,7 @@ import com.google.android.exoplayer2.util.Util;
 
 /**
  * The default {@link LoadControl} implementation.
+ * 注意这个策略，也许服务器的ts做了很多优化，但是最终不符合Cache管理策略，最终失败
  */
 public final class DefaultLoadControl implements LoadControl {
 
@@ -40,6 +41,8 @@ public final class DefaultLoadControl implements LoadControl {
   /**
    * The default duration of media that must be buffered for playback to start or resume following a
    * user action such as a seek, in milliseconds.
+   *
+   * 至少需要Buffer 2.5s, 如果ts文件太小，则不符合这个要求
    */
   public static final int DEFAULT_BUFFER_FOR_PLAYBACK_MS = 2500;
 
@@ -50,6 +53,7 @@ public final class DefaultLoadControl implements LoadControl {
    */
   public static final int DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS  = 5000;
 
+  // 当前Buffer的情况
   private static final int ABOVE_HIGH_WATERMARK = 0;
   private static final int BETWEEN_WATERMARKS = 1;
   private static final int BELOW_LOW_WATERMARK = 2;
@@ -98,9 +102,22 @@ public final class DefaultLoadControl implements LoadControl {
   public DefaultLoadControl(DefaultAllocator allocator, int minBufferMs, int maxBufferMs,
       long bufferForPlaybackMs, long bufferForPlaybackAfterRebufferMs) {
     this.allocator = allocator;
+
+    // 15s
     minBufferUs = minBufferMs * 1000L;
+    // 30s
     maxBufferUs = maxBufferMs * 1000L;
+
+    // 2.5s
     bufferForPlaybackUs = bufferForPlaybackMs * 1000L;
+
+    // 几个常数之间的关系:
+    // bufferForPlaybackUs 达到了就可以播放; 但是如果cache时间小于 minBufferUs, 则认为是 BELOW_LOW_WATERMARK 需要不管下载数据
+    // 如果 >= maxBufferUs, 则认为比较安全，可以暂停下载；如果在两者之间BETWEEN_WATERMARKS，则遵循"惯性"原则
+
+
+    // rebuffering 是什么概念呢?
+    // 5s
     bufferForPlaybackAfterRebufferUs = bufferForPlaybackAfterRebufferMs * 1000L;
   }
 
@@ -112,6 +129,8 @@ public final class DefaultLoadControl implements LoadControl {
   @Override
   public void onTracksSelected(Renderer[] renderers, TrackGroupArray trackGroups,
       TrackSelectionArray trackSelections) {
+
+    // 确保: allocator中有足够的内存
     targetBufferSize = 0;
     for (int i = 0; i < renderers.length; i++) {
       if (trackSelections.get(i) != null) {
@@ -138,14 +157,23 @@ public final class DefaultLoadControl implements LoadControl {
 
   @Override
   public boolean shouldStartPlayback(long bufferedDurationUs, boolean rebuffering) {
+    // 是否开始Playback?
     long minBufferDurationUs = rebuffering ? bufferForPlaybackAfterRebufferUs : bufferForPlaybackUs;
+
+    // 如果不要求Buffer, 或者达到Buffer的要求，则开始播放
     return minBufferDurationUs <= 0 || bufferedDurationUs >= minBufferDurationUs;
   }
 
   @Override
   public boolean shouldContinueLoading(long bufferedDurationUs) {
+    // 当前的数据必须至少Cache 2.5s还开始播放
+    // 1. 当前Buffer的数据的时长: bufferedDurationUs
     int bufferTimeState = getBufferTimeState(bufferedDurationUs);
+
     boolean targetBufferSizeReached = allocator.getTotalBytesAllocated() >= targetBufferSize;
+
+    // 如果数据缓存: BELOW_LOW_WATERMARK
+    //             BETWEEN_WATERMARKS，并还有足够的空间，并且之前在Buffering, 则就继续
     isBuffering = bufferTimeState == BELOW_LOW_WATERMARK
         || (bufferTimeState == BETWEEN_WATERMARKS && isBuffering && !targetBufferSizeReached);
     return isBuffering;

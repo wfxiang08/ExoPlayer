@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.source.hls;
 
 import android.text.TextUtils;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ParserException;
 import com.google.android.exoplayer2.extractor.DefaultExtractorInput;
@@ -38,18 +39,20 @@ import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.ParsableByteArray;
 import com.google.android.exoplayer2.util.Util;
+
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An HLS {@link MediaChunk}.
  */
-/* package */ final class HlsMediaChunk extends MediaChunk {
+/* package */
+final class HlsMediaChunk extends MediaChunk {
 
   private static final AtomicInteger UID_SOURCE = new AtomicInteger();
 
   private static final String PRIV_TIMESTAMP_FRAME_OWNER =
-      "com.apple.streaming.transportStreamTimestamp";
+          "com.apple.streaming.transportStreamTimestamp";
 
   private static final String AAC_FILE_EXTENSION = ".aac";
   private static final String AC3_FILE_EXTENSION = ".ac3";
@@ -95,29 +98,29 @@ import java.util.concurrent.atomic.AtomicInteger;
   private volatile boolean loadCompleted;
 
   /**
-   * @param dataSource The source from which the data should be loaded.
-   * @param dataSpec Defines the data to be loaded.
-   * @param initDataSpec Defines the initialization data to be fed to new extractors. May be null.
-   * @param hlsUrl The url of the playlist from which this chunk was obtained.
-   * @param trackSelectionReason See {@link #trackSelectionReason}.
-   * @param trackSelectionData See {@link #trackSelectionData}.
-   * @param startTimeUs The start time of the chunk in microseconds.
-   * @param endTimeUs The end time of the chunk in microseconds.
-   * @param chunkIndex The media sequence number of the chunk.
+   * @param dataSource                  The source from which the data should be loaded.
+   * @param dataSpec                    Defines the data to be loaded.
+   * @param initDataSpec                Defines the initialization data to be fed to new extractors. May be null.
+   * @param hlsUrl                      The url of the playlist from which this chunk was obtained.
+   * @param trackSelectionReason        See {@link #trackSelectionReason}.
+   * @param trackSelectionData          See {@link #trackSelectionData}.
+   * @param startTimeUs                 The start time of the chunk in microseconds.
+   * @param endTimeUs                   The end time of the chunk in microseconds.
+   * @param chunkIndex                  The media sequence number of the chunk.
    * @param discontinuitySequenceNumber The discontinuity sequence number of the chunk.
-   * @param isMasterTimestampSource True if the chunk can initialize the timestamp adjuster.
-   * @param timestampAdjuster Adjuster corresponding to the provided discontinuity sequence number.
-   * @param previousChunk The {@link HlsMediaChunk} that preceded this one. May be null.
-   * @param encryptionKey For AES encryption chunks, the encryption key.
-   * @param encryptionIv For AES encryption chunks, the encryption initialization vector.
+   * @param isMasterTimestampSource     True if the chunk can initialize the timestamp adjuster.
+   * @param timestampAdjuster           Adjuster corresponding to the provided discontinuity sequence number.
+   * @param previousChunk               The {@link HlsMediaChunk} that preceded this one. May be null.
+   * @param encryptionKey               For AES encryption chunks, the encryption key.
+   * @param encryptionIv                For AES encryption chunks, the encryption initialization vector.
    */
   public HlsMediaChunk(DataSource dataSource, DataSpec dataSpec, DataSpec initDataSpec,
-      HlsUrl hlsUrl, int trackSelectionReason, Object trackSelectionData, long startTimeUs,
-      long endTimeUs, int chunkIndex, int discontinuitySequenceNumber,
-      boolean isMasterTimestampSource, TimestampAdjuster timestampAdjuster,
-      HlsMediaChunk previousChunk, byte[] encryptionKey, byte[] encryptionIv) {
+                       HlsUrl hlsUrl, int trackSelectionReason, Object trackSelectionData, long startTimeUs,
+                       long endTimeUs, int chunkIndex, int discontinuitySequenceNumber,
+                       boolean isMasterTimestampSource, TimestampAdjuster timestampAdjuster,
+                       HlsMediaChunk previousChunk, byte[] encryptionKey, byte[] encryptionIv) {
     super(buildDataSource(dataSource, encryptionKey, encryptionIv), dataSpec, hlsUrl.format,
-        trackSelectionReason, trackSelectionData, startTimeUs, endTimeUs, chunkIndex);
+            trackSelectionReason, trackSelectionData, startTimeUs, endTimeUs, chunkIndex);
     this.initDataSpec = initDataSpec;
     this.hlsUrl = hlsUrl;
     this.isMasterTimestampSource = isMasterTimestampSource;
@@ -128,13 +131,13 @@ import java.util.concurrent.atomic.AtomicInteger;
     this.isEncrypted = this.dataSource instanceof Aes128DataSource;
     lastPathSegment = dataSpec.uri.getLastPathSegment();
     isPackedAudio = lastPathSegment.endsWith(AAC_FILE_EXTENSION)
-        || lastPathSegment.endsWith(AC3_FILE_EXTENSION)
-        || lastPathSegment.endsWith(EC3_FILE_EXTENSION)
-        || lastPathSegment.endsWith(MP3_FILE_EXTENSION);
+            || lastPathSegment.endsWith(AC3_FILE_EXTENSION)
+            || lastPathSegment.endsWith(EC3_FILE_EXTENSION)
+            || lastPathSegment.endsWith(MP3_FILE_EXTENSION);
     if (isPackedAudio) {
       id3Decoder = previousChunk != null ? previousChunk.id3Decoder : new Id3Decoder();
       id3Data = previousChunk != null ? previousChunk.id3Data
-          : new ParsableByteArray(Id3Decoder.ID3_HEADER_LENGTH);
+              : new ParsableByteArray(Id3Decoder.ID3_HEADER_LENGTH);
     } else {
       id3Decoder = null;
       id3Data = null;
@@ -192,13 +195,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
   private void maybeLoadInitData() throws IOException, InterruptedException {
     if ((previousChunk != null && previousChunk.extractor == extractor) || initLoadCompleted
-        || initDataSpec == null) {
+            || initDataSpec == null) {
       return;
     }
     DataSpec initSegmentDataSpec = Util.getRemainderDataSpec(initDataSpec, initSegmentBytesLoaded);
     try {
       ExtractorInput input = new DefaultExtractorInput(initDataSource,
-          initSegmentDataSpec.absoluteStreamPosition, initDataSource.open(initSegmentDataSpec));
+              initSegmentDataSpec.absoluteStreamPosition, initDataSource.open(initSegmentDataSpec));
       try {
         int result = Extractor.RESULT_CONTINUE;
         while (result == Extractor.RESULT_CONTINUE && !loadCanceled) {
@@ -230,9 +233,12 @@ import java.util.concurrent.atomic.AtomicInteger;
     if (!isMasterTimestampSource) {
       timestampAdjuster.waitUntilInitialized();
     }
+
+    // 如何加载文件呢?
     try {
       ExtractorInput input = new DefaultExtractorInput(dataSource,
-          loadDataSpec.absoluteStreamPosition, dataSource.open(loadDataSpec));
+              loadDataSpec.absoluteStreamPosition, dataSource.open(loadDataSpec));
+
       if (extractor == null) {
         // Media segment format is packed audio.
         long id3Timestamp = peekId3PrivTimestamp(input);
@@ -244,6 +250,7 @@ import java.util.concurrent.atomic.AtomicInteger;
       if (skipLoadedBytes) {
         input.skipFully(bytesLoaded);
       }
+
       try {
         int result = Extractor.RESULT_CONTINUE;
         while (result == Extractor.RESULT_CONTINUE && !loadCanceled) {
@@ -265,7 +272,7 @@ import java.util.concurrent.atomic.AtomicInteger;
    *
    * @param input The {@link ExtractorInput} to obtain the PRIV frame from.
    * @return The parsed, adjusted timestamp in microseconds
-   * @throws IOException If an error occurred peeking from the input.
+   * @throws IOException          If an error occurred peeking from the input.
    * @throws InterruptedException If the thread was interrupted.
    */
   private long peekId3PrivTimestamp(ExtractorInput input) throws IOException, InterruptedException {
@@ -315,7 +322,7 @@ import java.util.concurrent.atomic.AtomicInteger;
    * order to decrypt the loaded data. Else returns the original.
    */
   private static DataSource buildDataSource(DataSource dataSource, byte[] encryptionKey,
-      byte[] encryptionIv) {
+                                            byte[] encryptionIv) {
     if (encryptionKey == null || encryptionIv == null) {
       return dataSource;
     }
@@ -326,11 +333,11 @@ import java.util.concurrent.atomic.AtomicInteger;
     // Set the extractor that will read the chunk.
     Extractor extractor;
     boolean needNewExtractor = previousChunk == null
-        || previousChunk.discontinuitySequenceNumber != discontinuitySequenceNumber
-        || trackFormat != previousChunk.trackFormat;
+            || previousChunk.discontinuitySequenceNumber != discontinuitySequenceNumber
+            || trackFormat != previousChunk.trackFormat;
     boolean usingNewExtractor = true;
     if (lastPathSegment.endsWith(WEBVTT_FILE_EXTENSION)
-        || lastPathSegment.endsWith(VTT_FILE_EXTENSION)) {
+            || lastPathSegment.endsWith(VTT_FILE_EXTENSION)) {
       extractor = new WebvttExtractor(trackFormat.language, timestampAdjuster);
     } else if (!needNewExtractor) {
       // Only reuse TS and fMP4 extractors.
@@ -356,7 +363,7 @@ import java.util.concurrent.atomic.AtomicInteger;
         }
       }
       extractor = new TsExtractor(timestampAdjuster,
-          new DefaultTsPayloadReaderFactory(esReaderFactoryFlags), true);
+              new DefaultTsPayloadReaderFactory(esReaderFactoryFlags), true);
     }
     if (usingNewExtractor) {
       extractor.init(extractorOutput);
@@ -369,7 +376,7 @@ import java.util.concurrent.atomic.AtomicInteger;
     if (lastPathSegment.endsWith(AAC_FILE_EXTENSION)) {
       extractor = new AdtsExtractor(startTimeUs);
     } else if (lastPathSegment.endsWith(AC3_FILE_EXTENSION)
-        || lastPathSegment.endsWith(EC3_FILE_EXTENSION)) {
+            || lastPathSegment.endsWith(EC3_FILE_EXTENSION)) {
       extractor = new Ac3Extractor(startTimeUs);
     } else if (lastPathSegment.endsWith(MP3_FILE_EXTENSION)) {
       extractor = new Mp3Extractor(startTimeUs);

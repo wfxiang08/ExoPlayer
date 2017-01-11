@@ -34,7 +34,10 @@ public abstract class HlsPlaylist {
   public static final int TYPE_MASTER = 0;
   public static final int TYPE_MEDIA = 1;
 
+  // URL
   public final String baseUri;
+
+  // 类型
   @Type
   public final int type;
 

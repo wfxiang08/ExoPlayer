@@ -24,6 +24,7 @@ import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import java.util.List;
 
 /**
+ * 基于带宽的自适应算法
  * A bandwidth based adaptive {@link TrackSelection} for video, whose selected track is updated to
  * be the one of highest quality given the current network conditions and the state of the buffer.
  */
@@ -80,6 +81,7 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
 
     @Override
     public AdaptiveVideoTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
+      // 如何选择一个合适的VideoTrack呢?
       return new AdaptiveVideoTrackSelection(group, tracks, bandwidthMeter, maxInitialBitrate,
           minDurationForQualityIncreaseMs, maxDurationForQualityDecreaseMs,
           minDurationToRetainAfterDiscardMs, bandwidthFraction);
@@ -87,7 +89,7 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
 
   }
 
-  public static final int DEFAULT_MAX_INITIAL_BITRATE = 800000;
+  public static final int DEFAULT_MAX_INITIAL_BITRATE = 800000; // 默认是: 800K
   public static final int DEFAULT_MIN_DURATION_FOR_QUALITY_INCREASE_MS = 10000;
   public static final int DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS = 25000;
   public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
@@ -98,7 +100,7 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
   private final long minDurationForQualityIncreaseUs;
   private final long maxDurationForQualityDecreaseUs;
   private final long minDurationToRetainAfterDiscardUs;
-  private final float bandwidthFraction;
+  private final float bandwidthFraction; // 默认: 0.75
 
   private int selectedIndex;
   private int reason;
@@ -141,6 +143,7 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
       long maxDurationForQualityDecreaseMs, long minDurationToRetainAfterDiscardMs,
       float bandwidthFraction) {
     super(group, tracks);
+
     this.bandwidthMeter = bandwidthMeter;
     this.maxInitialBitrate = maxInitialBitrate;
     this.minDurationForQualityIncreaseUs = minDurationForQualityIncreaseMs * 1000L;
@@ -153,16 +156,24 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
 
   @Override
   public void updateSelectedTrack(long bufferedDurationUs) {
+    // 如何更新选中的额Track呢?
     long nowMs = SystemClock.elapsedRealtime();
+
     // Get the current and ideal selections.
     int currentSelectedIndex = selectedIndex;
     Format currentFormat = getSelectedFormat();
+
+    // 理想的Format
     int idealSelectedIndex = determineIdealSelectedIndex(nowMs);
     Format idealFormat = getFormat(idealSelectedIndex);
+
     // Assume we can switch to the ideal selection.
     selectedIndex = idealSelectedIndex;
+
     // Revert back to the current selection if conditions are not suitable for switching.
     if (currentFormat != null && !isBlacklisted(selectedIndex, nowMs)) {
+
+      // 如果birate升高了
       if (idealFormat.bitrate > currentFormat.bitrate
           && bufferedDurationUs < minDurationForQualityIncreaseUs) {
         // The ideal track is a higher quality, but we have insufficient buffer to safely switch
@@ -175,6 +186,8 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
         selectedIndex = currentSelectedIndex;
       }
     }
+
+    // 如果有变化，则标志位自适应变化
     // If we adapted, update the trigger.
     if (selectedIndex != currentSelectedIndex) {
       reason = C.SELECTION_REASON_ADAPTIVE;
@@ -230,16 +243,24 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
    *     {@link Long#MIN_VALUE} to ignore blacklisting.
    */
   private int determineIdealSelectedIndex(long nowMs) {
+
+    // 确定理想的Index
+    // 1. 估计的bitrate
     long bitrateEstimate = bandwidthMeter.getBitrateEstimate();
-    long effectiveBitrate = bitrateEstimate == BandwidthMeter.NO_ESTIMATE
-        ? maxInitialBitrate : (long) (bitrateEstimate * bandwidthFraction);
+    // 有效的Bitrate
+    // 最大的初始bitrate或者估算的: 0.75
+    long effectiveBitrate = bitrateEstimate == BandwidthMeter.NO_ESTIMATE ? maxInitialBitrate : (long) (bitrateEstimate * bandwidthFraction);
+
     int lowestBitrateNonBlacklistedIndex = 0;
     for (int i = 0; i < length; i++) {
       if (nowMs == Long.MIN_VALUE || !isBlacklisted(i, nowMs)) {
         Format format = getFormat(i);
+        // formats的码率从高到低变化
+        // 直到找到一个满足带宽需要的Format
         if (format.bitrate <= effectiveBitrate) {
           return i;
         } else {
+          // 满足条件的最小带宽的Format
           lowestBitrateNonBlacklistedIndex = i;
         }
       }

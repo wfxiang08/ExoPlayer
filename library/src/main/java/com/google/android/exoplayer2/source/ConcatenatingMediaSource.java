@@ -29,6 +29,8 @@ import java.util.Map;
 /**
  * Concatenates multiple {@link MediaSource}s. It is valid for the same {@link MediaSource} instance
  * to be present more than once in the concatenation.
+ *
+ * 多个MediaSource的合并（Concatenates)
  */
 public final class ConcatenatingMediaSource implements MediaSource {
 
@@ -47,6 +49,8 @@ public final class ConcatenatingMediaSource implements MediaSource {
    */
   public ConcatenatingMediaSource(MediaSource... mediaSources) {
     this.mediaSources = mediaSources;
+
+    // 时间上有先后关系，多个MediaSource的合并
     timelines = new Timeline[mediaSources.length];
     manifests = new Object[mediaSources.length];
     sourceIndexByMediaPeriod = new HashMap<>();
@@ -56,6 +60,8 @@ public final class ConcatenatingMediaSource implements MediaSource {
   @Override
   public void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener) {
     this.listener = listener;
+
+    // 每个MediaSources单独准备
     for (int i = 0; i < mediaSources.length; i++) {
       if (!duplicateFlags[i]) {
         final int index = i;

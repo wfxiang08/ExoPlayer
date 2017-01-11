@@ -16,17 +16,20 @@
 package com.google.android.exoplayer2.source.hls;
 
 import android.net.Uri;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSourceInputStream;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.util.Assertions;
+
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
+
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.NoSuchPaddingException;
@@ -41,7 +44,8 @@ import javax.crypto.spec.SecretKeySpec;
  * designed specifically for reading whole files as defined in an HLS media playlist. For this
  * reason the implementation is private to the HLS package.
  */
-/* package */ final class Aes128DataSource implements DataSource {
+/* package */
+final class Aes128DataSource implements DataSource {
 
   private final DataSource upstream;
   private final byte[] encryptionKey;
@@ -50,9 +54,9 @@ import javax.crypto.spec.SecretKeySpec;
   private CipherInputStream cipherInputStream;
 
   /**
-   * @param upstream The upstream {@link DataSource}.
+   * @param upstream      The upstream {@link DataSource}.
    * @param encryptionKey The encryption key.
-   * @param encryptionIv The encryption initialization vector.
+   * @param encryptionIv  The encryption initialization vector.
    */
   public Aes128DataSource(DataSource upstream, byte[] encryptionKey, byte[] encryptionIv) {
     this.upstream = upstream;
@@ -79,7 +83,7 @@ import javax.crypto.spec.SecretKeySpec;
     }
 
     cipherInputStream = new CipherInputStream(
-        new DataSourceInputStream(upstream, dataSpec), cipher);
+            new DataSourceInputStream(upstream, dataSpec), cipher);
 
     return C.LENGTH_UNSET;
   }

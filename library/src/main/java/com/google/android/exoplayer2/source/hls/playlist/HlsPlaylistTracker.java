@@ -150,8 +150,13 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
    * Starts tracking all the playlists related to the provided Uri.
    */
   public void start() {
+    // 下载: Playlist, 并且通过 playlistParser 来解析
+    // dataSourceFactory.createDataSource() 指定了网络请求
     ParsingLoadable<HlsPlaylist> masterPlaylistLoadable =
-            new ParsingLoadable<>(dataSourceFactory.createDataSource(), initialPlaylistUri, C.DATA_TYPE_MANIFEST, playlistParser);
+            new ParsingLoadable<>(dataSourceFactory.createDataSource(),
+                    initialPlaylistUri, C.DATA_TYPE_MANIFEST, playlistParser);
+
+    // this Loader callback
     initialPlaylistLoader.startLoading(masterPlaylistLoadable, this, minRetryCount);
   }
 
@@ -256,6 +261,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     // 如何处理: MediaPlaylistBundle ?
     // 1. 如果是MediaPlaylist, 则加载完毕
     // 2. 如果是MastPlaylist, 则加载Playlist
+    // 参考: createBundles
     MediaPlaylistBundle primaryBundle = playlistBundles.get(primaryHlsUrl);
     if (isMediaPlaylist) {
       // We don't need to load the playlist again. We can use the same result.
@@ -362,6 +368,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
    */
   private HlsMediaPlaylist adjustPlaylistTimestamps(HlsMediaPlaylist oldPlaylist,
       HlsMediaPlaylist newPlaylist) {
+    // 如何处理视频上的不连续性?
     if (newPlaylist.hasProgramDateTime) {
       if (newPlaylist.isNewerThan(oldPlaylist)) {
         return newPlaylist;
@@ -436,6 +443,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     }
 
     public void loadPlaylist() {
+      // 再次开始Loading
       blacklistUntilMs = 0;
       if (!mediaPlaylistLoader.isLoading()) {
         mediaPlaylistLoader.startLoading(mediaPlaylistLoadable, this, minRetryCount);
@@ -447,6 +455,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     @Override
     public void onLoadCompleted(ParsingLoadable<HlsPlaylist> loadable, long elapsedRealtimeMs,
         long loadDurationMs) {
+      // 解析完毕
       processLoadedPlaylist((HlsMediaPlaylist) loadable.getResult());
 
       // 通知加载情况

@@ -89,6 +89,7 @@ public final class RawResourceDataSource implements DataSource {
   @Override
   public long open(DataSpec dataSpec) throws RawResourceDataSourceException {
     try {
+      // rawresource://resource_id
       uri = dataSpec.uri;
       if (!TextUtils.equals(RAW_RESOURCE_SCHEME, uri.getScheme())) {
         throw new RawResourceDataSourceException("URI must use scheme " + RAW_RESOURCE_SCHEME);

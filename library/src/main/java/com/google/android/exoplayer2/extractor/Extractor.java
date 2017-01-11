@@ -20,6 +20,11 @@ import java.io.IOException;
 
 /**
  * Extracts media data from a container format.
+ * 用于处理不同容器(Container Format), 识别不同的文件格式
+ * 关注:
+ *    mp4 Extractor, 是否支持Range Request呢? 这样是否直接跳过ts这个技术呢？
+ *    ts Extractor
+ *    Mp4Extractor
  */
 public interface Extractor {
 

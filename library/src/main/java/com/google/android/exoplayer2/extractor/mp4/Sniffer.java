@@ -70,6 +70,7 @@ import java.io.IOException;
    */
   public static boolean sniffFragmented(ExtractorInput input)
       throws IOException, InterruptedException {
+    // Peek数据，看是否为mp4格式
     return sniffInternal(input, true);
   }
 
@@ -89,6 +90,7 @@ import java.io.IOException;
 
   private static boolean sniffInternal(ExtractorInput input, boolean fragmented)
       throws IOException, InterruptedException {
+
     long inputLength = input.getLength();
     int bytesToSearch = (int) (inputLength == C.LENGTH_UNSET || inputLength > SEARCH_LENGTH
         ? SEARCH_LENGTH : inputLength);

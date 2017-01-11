@@ -97,6 +97,8 @@ public final class UdpDataSource implements DataSource {
   @Override
   public long open(DataSpec dataSpec) throws UdpDataSourceException {
     uri = dataSpec.uri;
+
+    // 从DataSpec中获取host/port
     String host = uri.getHost();
     int port = uri.getPort();
 
@@ -108,12 +110,14 @@ public final class UdpDataSource implements DataSource {
         multicastSocket.joinGroup(address);
         socket = multicastSocket;
       } else {
+        // 创建: DatagramSocket
         socket = new DatagramSocket(socketAddress);
       }
     } catch (IOException e) {
       throw new UdpDataSourceException(e);
     }
 
+    // 设置Timeout
     try {
       socket.setSoTimeout(socketTimeoutMillis);
     } catch (SocketException e) {
@@ -124,6 +128,8 @@ public final class UdpDataSource implements DataSource {
     if (listener != null) {
       listener.onTransferStart(this, dataSpec);
     }
+
+    // 数据长度不确定
     return C.LENGTH_UNSET;
   }
 
@@ -136,6 +142,8 @@ public final class UdpDataSource implements DataSource {
     if (packetRemaining == 0) {
       // We've read all of the data from the current packet. Get another.
       try {
+        // 处理模式:
+        // 先读取一帧数据，然后再分块返回给上层代码
         socket.receive(packet);
       } catch (IOException e) {
         throw new UdpDataSourceException(e);

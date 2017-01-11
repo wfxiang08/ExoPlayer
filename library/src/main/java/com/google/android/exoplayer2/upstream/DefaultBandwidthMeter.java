@@ -23,6 +23,8 @@ import com.google.android.exoplayer2.util.SlidingPercentile;
 /**
  * Estimates bandwidth by listening to data transfers. The bandwidth estimate is calculated using
  * a {@link SlidingPercentile} and is updated each time a transfer ends.
+ *
+ * 如何评估带宽呢?
  */
 public final class DefaultBandwidthMeter implements BandwidthMeter, TransferListener<Object> {
 
@@ -82,13 +84,18 @@ public final class DefaultBandwidthMeter implements BandwidthMeter, TransferList
   @Override
   public synchronized void onTransferEnd(Object source) {
     Assertions.checkState(streamCount > 0);
+
+    // 统计传输时间 + 传输数据流（字节)
     long nowMs = SystemClock.elapsedRealtime();
     int sampleElapsedTimeMs = (int) (nowMs - sampleStartTimeMs);
     totalElapsedTimeMs += sampleElapsedTimeMs;
     totalBytesTransferred += sampleBytesTransferred;
+
     if (sampleElapsedTimeMs > 0) {
       float bitsPerSecond = (sampleBytesTransferred * 8000) / sampleElapsedTimeMs;
+
       slidingPercentile.addSample((int) Math.sqrt(sampleBytesTransferred), bitsPerSecond);
+
       if (totalElapsedTimeMs >= ELAPSED_MILLIS_FOR_ESTIMATE
           || totalBytesTransferred >= BYTES_TRANSFERRED_FOR_ESTIMATE) {
         float bitrateEstimateFloat = slidingPercentile.getPercentile(0.5f);
@@ -108,6 +115,7 @@ public final class DefaultBandwidthMeter implements BandwidthMeter, TransferList
       eventHandler.post(new Runnable()  {
         @Override
         public void run() {
+          // 带宽变化了，如何处理呢?
           eventListener.onBandwidthSample(elapsedMs, bytes, bitrate);
         }
       });

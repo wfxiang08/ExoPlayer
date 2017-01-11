@@ -59,13 +59,23 @@ public final class DefaultAllocator implements Allocator {
    */
   public DefaultAllocator(boolean trimOnReset, int individualAllocationSize,
       int initialAllocationCount) {
+
+    // 注意开发的各种Utils
     Assertions.checkArgument(individualAllocationSize > 0);
     Assertions.checkArgument(initialAllocationCount >= 0);
+
     this.trimOnReset = trimOnReset;
+    // 单个的Allocation的大小
     this.individualAllocationSize = individualAllocationSize;
     this.availableCount = initialAllocationCount;
+
+    // 内部管理一些: Allocation
+    // 这些Allocation没有分配内存
     this.availableAllocations = new Allocation[initialAllocationCount + AVAILABLE_EXTRA_CAPACITY];
+
+
     if (initialAllocationCount > 0) {
+      // 预先给一些Allocation分配内存
       initialAllocationBlock = new byte[initialAllocationCount * individualAllocationSize];
       for (int i = 0; i < initialAllocationCount; i++) {
         int allocationOffset = i * individualAllocationSize;
@@ -74,6 +84,8 @@ public final class DefaultAllocator implements Allocator {
     } else {
       initialAllocationBlock = null;
     }
+
+    // 用于做接口的Adapter, 单个元素到数组的转换
     singleAllocationReleaseHolder = new Allocation[1];
   }
 
@@ -86,6 +98,8 @@ public final class DefaultAllocator implements Allocator {
   public synchronized void setTargetBufferSize(int targetBufferSize) {
     boolean targetBufferSizeReduced = targetBufferSize < this.targetBufferSize;
     this.targetBufferSize = targetBufferSize;
+
+    // BufferSize是什么概念？
     if (targetBufferSizeReduced) {
       trim();
     }
@@ -95,10 +109,15 @@ public final class DefaultAllocator implements Allocator {
   public synchronized Allocation allocate() {
     allocatedCount++;
     Allocation allocation;
+
     if (availableCount > 0) {
+      // 直接从内存中拿出一个Allocation
       allocation = availableAllocations[--availableCount];
+
+      // 注意内存的管理
       availableAllocations[availableCount] = null;
     } else {
+      // 实在没有就删除
       allocation = new Allocation(new byte[individualAllocationSize], 0);
     }
     return allocation;
@@ -107,29 +126,41 @@ public final class DefaultAllocator implements Allocator {
   @Override
   public synchronized void release(Allocation allocation) {
     singleAllocationReleaseHolder[0] = allocation;
+    // 为了保持对release(Allocation[])的接口兼容
     release(singleAllocationReleaseHolder);
   }
 
   @Override
   public synchronized void release(Allocation[] allocations) {
+    // 1. 扩大 availableAllocations
     if (availableCount + allocations.length >= availableAllocations.length) {
       availableAllocations = Arrays.copyOf(availableAllocations,
           Math.max(availableAllocations.length * 2, availableCount + allocations.length));
     }
+
+    // 2. 将Allocations放回到: availableAllocations
     for (Allocation allocation : allocations) {
       // Weak sanity check that the allocation probably originated from this pool.
       Assertions.checkArgument(allocation.data == initialAllocationBlock
           || allocation.data.length == individualAllocationSize);
       availableAllocations[availableCount++] = allocation;
     }
+
+    // 3. 更新统计数据
     allocatedCount -= allocations.length;
+
     // Wake up threads waiting for the allocated size to drop.
     notifyAll();
   }
 
   @Override
   public synchronized void trim() {
+
+    // 总共的内存分配次数
     int targetAllocationCount = Util.ceilDivide(targetBufferSize, individualAllocationSize);
+
+    // 要做什么呢?
+    // 如果: targetAvailableCount < availableCount, 则需要删除多余的Allocation
     int targetAvailableCount = Math.max(0, targetAllocationCount - allocatedCount);
     if (targetAvailableCount >= availableCount) {
       // We're already at or below the target.
@@ -145,12 +176,16 @@ public final class DefaultAllocator implements Allocator {
       while (lowIndex <= highIndex) {
         Allocation lowAllocation = availableAllocations[lowIndex];
         if (lowAllocation.data == initialAllocationBlock) {
+          // 1. 直接跳过: lowIndex
           lowIndex++;
         } else {
+          // 2. loadIndex需要切换到后面
           Allocation highAllocation = availableAllocations[highIndex];
           if (highAllocation.data != initialAllocationBlock) {
+            // 2.1 如果highIndex也在后面排列，则暂时不管loadIndex
             highIndex--;
           } else {
+            // 2.2 交换
             availableAllocations[lowIndex++] = highAllocation;
             availableAllocations[highIndex--] = lowAllocation;
           }
@@ -165,17 +200,20 @@ public final class DefaultAllocator implements Allocator {
     }
 
     // Discard allocations beyond the target.
+    // 降低 availableCount 数量
     Arrays.fill(availableAllocations, targetAvailableCount, availableCount, null);
     availableCount = targetAvailableCount;
   }
 
   @Override
   public synchronized int getTotalBytesAllocated() {
+    // 总共分配的内存
     return allocatedCount * individualAllocationSize;
   }
 
   @Override
   public int getIndividualAllocationLength() {
+    // 单给Allocation的大小
     return individualAllocationSize;
   }
 

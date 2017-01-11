@@ -128,6 +128,7 @@ public final class TsExtractor implements Extractor {
   public boolean sniff(ExtractorInput input) throws IOException, InterruptedException {
     byte[] buffer = tsPacketBuffer.data;
     input.peekFully(buffer, 0, BUFFER_SIZE);
+
     for (int j = 0; j < TS_PACKET_SIZE; j++) {
       for (int i = 0; true; i++) {
         if (i == BUFFER_PACKET_COUNT) {

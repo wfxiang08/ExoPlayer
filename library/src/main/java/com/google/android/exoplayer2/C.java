@@ -27,6 +27,7 @@ import java.util.UUID;
 
 /**
  * Defines constants used by the library.
+ * 定义各种常量
  */
 public final class C {
 
