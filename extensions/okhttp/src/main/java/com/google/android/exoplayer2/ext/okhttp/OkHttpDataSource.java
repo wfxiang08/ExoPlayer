@@ -153,6 +153,8 @@ public class OkHttpDataSource implements HttpDataSource {
     this.bytesRead = 0;
     this.bytesSkipped = 0;
 
+    // 读取Cache
+
     // 如何创建网络请求呢?
     Request request = makeRequest(dataSpec);
 
@@ -207,6 +209,7 @@ public class OkHttpDataSource implements HttpDataSource {
       listener.onTransferStart(this, dataSpec);
     }
 
+    // TODO：缓存数据
     return bytesToRead;
   }
 
