@@ -227,6 +227,9 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     handler.obtainMessage(MSG_SET_PLAY_WHEN_READY, playWhenReady ? 1 : 0, 0).sendToTarget();
   }
 
+  // seekTo操作如何执行呢?
+  //  可以seek到之前的某个位置，也可以seek到之后的某个位置；可能导致缓存失效
+  //
   public void seekTo(Timeline timeline, int windowIndex, long positionUs) {
     handler.obtainMessage(MSG_SEEK_TO, new SeekPosition(timeline, windowIndex, positionUs))
             .sendToTarget();
@@ -571,6 +574,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     }
 
     Pair<Integer, Long> periodPosition = resolveSeekPosition(seekPosition);
+
     if (periodPosition == null) {
       // The seek position was valid for the timeline that it was performed into, but the
       // timeline has changed and a suitable seek position could not be resolved in the new one.

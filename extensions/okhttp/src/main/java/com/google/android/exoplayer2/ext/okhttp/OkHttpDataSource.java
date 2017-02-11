@@ -149,6 +149,9 @@ public class OkHttpDataSource implements HttpDataSource {
 
   @Override
   public long open(DataSpec dataSpec) throws HttpDataSourceException {
+
+    // DataSpec是否需要做一个限制
+    // 例如: 对于HLS我们就不支持Range下载？ 一般HLS文件比较小，而且一般也不在本地区分码率等，因此就一次搞定
     this.dataSpec = dataSpec;
     this.bytesRead = 0;
     this.bytesSkipped = 0;
@@ -161,6 +164,7 @@ public class OkHttpDataSource implements HttpDataSource {
     try {
       // 通过callFactory可以共享底部的Sesion, making http2.0可用
       response = callFactory.newCall(request).execute();
+
       responseByteStream = response.body().byteStream();
     } catch (IOException e) {
       throw new HttpDataSourceException("Unable to connect to " + dataSpec.uri.toString(), e,
@@ -216,6 +220,7 @@ public class OkHttpDataSource implements HttpDataSource {
   @Override
   public int read(byte[] buffer, int offset, int readLength) throws HttpDataSourceException {
     try {
+      // HLS播放时拖放时如何解决的呢?
       skipInternal();
       return readInternal(buffer, offset, readLength);
     } catch (IOException e) {
