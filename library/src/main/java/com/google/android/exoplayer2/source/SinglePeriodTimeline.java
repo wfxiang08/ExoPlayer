@@ -21,6 +21,7 @@ import com.google.android.exoplayer2.util.Assertions;
 
 /**
  * A {@link Timeline} consisting of a single period and static window.
+ * 只包含1个window和1个period的Timeline
  */
 public final class SinglePeriodTimeline extends Timeline {
 
@@ -74,11 +75,15 @@ public final class SinglePeriodTimeline extends Timeline {
   }
 
   @Override
-  public Window getWindow(int windowIndex, Window window, boolean setIds,
-      long defaultPositionProjectionUs) {
+  public Window getWindow(int windowIndex, Window window, boolean setIds, long defaultPositionProjectionUs) {
     Assertions.checkIndex(windowIndex, 0, 1);
+
     Object id = setIds ? ID : null;
     long windowDefaultStartPositionUs = this.windowDefaultStartPositionUs;
+
+    //
+    // 正常情况下 isDynamic  == false
+    //
     if (isDynamic) {
       windowDefaultStartPositionUs += defaultPositionProjectionUs;
       if (windowDefaultStartPositionUs > windowDurationUs) {
@@ -86,8 +91,14 @@ public final class SinglePeriodTimeline extends Timeline {
         windowDefaultStartPositionUs = C.TIME_UNSET;
       }
     }
-    return window.set(id, C.TIME_UNSET, C.TIME_UNSET, isSeekable, isDynamic,
-        windowDefaultStartPositionUs, windowDurationUs, 0, 0, windowPositionInPeriodUs);
+
+    // 修改window的信息
+    // Object id, long presentationStartTimeMs, long windowStartTimeMs,
+    // boolean isSeekable, boolean isDynamic, long defaultPositionUs, long durationUs,
+    // int firstPeriodIndex, int lastPeriodIndex, long positionInFirstPeriodUs
+    return window.set(id, C.TIME_UNSET, C.TIME_UNSET,
+            isSeekable, isDynamic, windowDefaultStartPositionUs, windowDurationUs,
+            0, 0, windowPositionInPeriodUs);
   }
 
   @Override

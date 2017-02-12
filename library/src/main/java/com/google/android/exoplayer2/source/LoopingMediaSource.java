@@ -90,6 +90,7 @@ public final class LoopingMediaSource implements MediaSource {
     childSource.releaseSource();
   }
 
+  // 带有重复播放的Timeline
   private static final class LoopingTimeline extends Timeline {
 
     private final Timeline childTimeline;

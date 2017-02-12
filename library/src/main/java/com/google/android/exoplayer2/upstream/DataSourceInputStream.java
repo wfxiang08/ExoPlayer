@@ -84,10 +84,14 @@ public final class DataSourceInputStream extends InputStream {
   @Override
   public int read(byte[] buffer, int offset, int length) throws IOException {
     Assertions.checkState(!closed);
+
+    // 确保DataSource被打开
     checkOpened();
 
 
+    // 通过dataSource将底层的实现抽象开来，例如: 文件，URLConnection等
     int bytesRead = dataSource.read(buffer, offset, length);
+
     if (bytesRead == C.RESULT_END_OF_INPUT) {
       return -1;
     } else {
@@ -106,6 +110,9 @@ public final class DataSourceInputStream extends InputStream {
 
   private void checkOpened() throws IOException {
     if (!opened) {
+      // 通过dataSource打开dataSpec
+      // 例如： OKHttpDataSource
+      //
       dataSource.open(dataSpec);
       opened = true;
     }

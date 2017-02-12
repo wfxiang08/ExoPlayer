@@ -196,9 +196,17 @@ class HlsChunkSource {
   public void getNextChunk(HlsMediaChunk previous, long playbackPositionUs, HlsChunkHolder out) {
 
     int oldVariantIndex = previous == null ? C.INDEX_UNSET : trackGroup.indexOf(previous.trackFormat);
+
     // Use start time of the previous chunk rather than its end time because switching format will
-    // require downloading overlapping segments.
+    // require downloading overlapping segments. TODO: 这个如何理解呢? 为什么要下载Overlapping的Segments?
+    // 如何切换格式?
+
+    // 下一个Chunk该如何选择呢?
+    // 首先判断已近缓存了多少数据
+    //   playbackPositionUs 表示当前playback的位置
+    //
     long bufferedDurationUs = previous == null ? 0 : Math.max(0, previous.startTimeUs - playbackPositionUs);
+
 
     // Select the variant.
     trackSelection.updateSelectedTrack(bufferedDurationUs);
@@ -207,6 +215,8 @@ class HlsChunkSource {
     int newVariantIndex = trackSelection.getSelectedIndexInTrackGroup();
 
     boolean switchingVariant = oldVariantIndex != newVariantIndex;
+
+    // 获取新的Playlist
     HlsMediaPlaylist mediaPlaylist = playlistTracker.getPlaylistSnapshot(variants[newVariantIndex]);
     if (mediaPlaylist == null) {
       out.playlist = variants[newVariantIndex];
@@ -217,6 +227,9 @@ class HlsChunkSource {
     // Select the chunk.
     int chunkMediaSequence;
     if (previous == null || switchingVariant) {
+
+      // 下一个视频从什么地方开始下载呢?
+      // 为什么需要有一个Overlap的空间呢? TODO:
       // 第一次下载，或者切换: Variants
       long targetPositionUs = previous == null ? playbackPositionUs : previous.startTimeUs;
 
@@ -224,9 +237,12 @@ class HlsChunkSource {
         // If the playlist is too old to contain the chunk, we need to refresh it.
         chunkMediaSequence = mediaPlaylist.mediaSequence + mediaPlaylist.segments.size();
       } else {
+
+        // 普通的VOD点播的视频
         chunkMediaSequence = Util.binarySearchFloor(mediaPlaylist.segments,
                 targetPositionUs - mediaPlaylist.startTimeUs, true,
                 !playlistTracker.isLive() || previous == null) + mediaPlaylist.mediaSequence;
+
         if (chunkMediaSequence < mediaPlaylist.mediaSequence && previous != null) {
           // We try getting the next chunk without adapting in case that's the reason for falling
           // behind the live window.
@@ -236,8 +252,12 @@ class HlsChunkSource {
         }
       }
     } else {
+      // 正常下载下一个Segment
       chunkMediaSequence = previous.getNextChunkIndex();
     }
+
+    // 获取有效的: chunkMediaSequence
+
     if (chunkMediaSequence < mediaPlaylist.mediaSequence) {
       fatalError = new BehindLiveWindowException();
       return;
@@ -253,32 +273,16 @@ class HlsChunkSource {
       return;
     }
 
-    // Handle encryption.
+    // 获取有效的Segment
     HlsMediaPlaylist.Segment segment = mediaPlaylist.segments.get(chunkIndex);
+    clearEncryptionData();
 
-    // Check if encryption is specified.
-    // 暂时认为都是非加密的
-    if (segment.isEncrypted) {
-      Uri keyUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.encryptionKeyUri);
-      if (!keyUri.equals(encryptionKeyUri)) {
-        // Encryption is specified and the key has changed.
-        out.chunk = newEncryptionKeyChunk(keyUri, segment.encryptionIV, newVariantIndex,
-                trackSelection.getSelectionReason(), trackSelection.getSelectionData());
-        return;
-      }
-      if (!Util.areEqual(segment.encryptionIV, encryptionIvString)) {
-        setEncryptionData(keyUri, segment.encryptionIV, encryptionKey);
-      }
-    } else {
-      clearEncryptionData();
-    }
-
+    // 构建相关的DataSpec
     DataSpec initDataSpec = null;
     Segment initSegment = mediaPlaylist.initializationSegment;
     if (initSegment != null) {
       Uri initSegmentUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, initSegment.url);
-      initDataSpec = new DataSpec(initSegmentUri, initSegment.byterangeOffset,
-              initSegment.byterangeLength, null);
+      initDataSpec = new DataSpec(initSegmentUri, initSegment.byterangeOffset, initSegment.byterangeLength, null);
     }
 
     // Compute start time of the next chunk.
@@ -288,10 +292,11 @@ class HlsChunkSource {
 
     // Configure the data source and spec for the chunk.
     Uri chunkUri = UriUtil.resolveToUri(mediaPlaylist.baseUri, segment.url);
-    DataSpec dataSpec = new DataSpec(chunkUri, segment.byterangeOffset, segment.byterangeLength,
-            null);
+    DataSpec dataSpec = new DataSpec(chunkUri, segment.byterangeOffset, segment.byterangeLength, null);
 
     // 选择一个MediaChunk
+    // newVariantIndex 主要通过 trackSelection 来设置
+    // 但是似乎没有没有开始下载?
     out.chunk = new HlsMediaChunk(dataSource, dataSpec, initDataSpec, variants[newVariantIndex],
             trackSelection.getSelectionReason(), trackSelection.getSelectionData(),
             startTimeUs, startTimeUs + segment.durationUs, chunkMediaSequence,

@@ -45,6 +45,7 @@ public abstract class BaseTrackSelection implements TrackSelection {
 
   /**
    * The {@link Format}s of the selected tracks, in order of decreasing bandwidth.
+   * 所需要的带宽从大到小排列
    */
   private final Format[] formats;
   /**
@@ -71,6 +72,7 @@ public abstract class BaseTrackSelection implements TrackSelection {
       formats[i] = group.getFormat(tracks[i]);
     }
     Arrays.sort(formats, new DecreasingBandwidthComparator());
+
     // Set the format indices in the same order.
     this.tracks = new int[length];
     for (int i = 0; i < length; i++) {

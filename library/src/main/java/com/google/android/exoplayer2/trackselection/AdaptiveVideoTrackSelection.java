@@ -89,11 +89,21 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
 
   }
 
-  public static final int DEFAULT_MAX_INITIAL_BITRATE = 800000; // 默认是: 800K
+  // 至少下载了: 2000ms，也即是2s；或者512k数据才能有一个稳定的带宽估计，这个2s时间也不短；
+  // 因此一个默认的variant的选择也很重要
+
+  // 默认是: 800K，这个就是为什么刚开始视频会比较模糊
+  // TODO: 提高编码效率, 保证低码率的视频也足够清晰
+  //
+  public static final int DEFAULT_MAX_INITIAL_BITRATE = 800000;
+
+  // 切换高质量的视频：必须至少10s,
   public static final int DEFAULT_MIN_DURATION_FOR_QUALITY_INCREASE_MS = 10000;
   public static final int DEFAULT_MAX_DURATION_FOR_QUALITY_DECREASE_MS = 25000;
+
   public static final int DEFAULT_MIN_DURATION_TO_RETAIN_AFTER_DISCARD_MS = 25000;
-  public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f;
+
+  public static final float DEFAULT_BANDWIDTH_FRACTION = 0.75f; // 0.75的估算
 
   private final BandwidthMeter bandwidthMeter;
   private final int maxInitialBitrate;
@@ -178,11 +188,14 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
           && bufferedDurationUs < minDurationForQualityIncreaseUs) {
         // The ideal track is a higher quality, but we have insufficient buffer to safely switch
         // up. Defer switching up for now.
+        // 要切换到高码率，则需要有足够的buffer时间
         selectedIndex = currentSelectedIndex;
+
       } else if (idealFormat.bitrate < currentFormat.bitrate
           && bufferedDurationUs >= maxDurationForQualityDecreaseUs) {
         // The ideal track is a lower quality, but we have sufficient buffer to defer switching
         // down for now.
+        // 如果我们的高清码率的视频buffer足够多，那么我们也可以不着急切换variant(format)
         selectedIndex = currentSelectedIndex;
       }
     }
@@ -214,11 +227,16 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
     if (queue.isEmpty()) {
       return 0;
     }
+
+    // 评估需要保留的queue的size
     int queueSize = queue.size();
     long bufferedDurationUs = queue.get(queueSize - 1).endTimeUs - playbackPositionUs;
+    // 本来就不够，不能扔
     if (bufferedDurationUs < minDurationToRetainAfterDiscardUs) {
       return queueSize;
     }
+
+
     int idealSelectedIndex = determineIdealSelectedIndex(SystemClock.elapsedRealtime());
     Format idealFormat = getFormat(idealSelectedIndex);
     // Discard from the first SD chunk beyond minDurationToRetainAfterDiscardUs whose resolution and
@@ -226,6 +244,8 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
     for (int i = 0; i < queueSize; i++) {
       MediaChunk chunk = queue.get(i);
       long durationBeforeThisChunkUs = chunk.startTimeUs - playbackPositionUs;
+
+      // 保证有足够的视频，并且chunk中的事情质量不是很高，则可以扔掉部分
       if (durationBeforeThisChunkUs >= minDurationToRetainAfterDiscardUs
           && chunk.trackFormat.bitrate < idealFormat.bitrate
           && chunk.trackFormat.height < idealFormat.height
@@ -254,13 +274,14 @@ public class AdaptiveVideoTrackSelection extends BaseTrackSelection {
     int lowestBitrateNonBlacklistedIndex = 0;
     for (int i = 0; i < length; i++) {
       if (nowMs == Long.MIN_VALUE || !isBlacklisted(i, nowMs)) {
-        Format format = getFormat(i);
         // formats的码率从高到低变化
+        Format format = getFormat(i);
+
         // 直到找到一个满足带宽需要的Format
         if (format.bitrate <= effectiveBitrate) {
           return i;
         } else {
-          // 满足条件的最小带宽的Format
+          // 不满足条件，但是带宽最小的Format
           lowestBitrateNonBlacklistedIndex = i;
         }
       }

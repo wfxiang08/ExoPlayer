@@ -94,7 +94,9 @@ public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlayli
 
   @Override
   public HlsPlaylist parse(Uri uri, InputStream inputStream) throws IOException {
+    // InputStream 封装成为: BufferedReader, 注意文件的编码，不过m3u8等文件都是英文
     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+
     Queue<String> extraLines = new LinkedList<>();
     String line;
 

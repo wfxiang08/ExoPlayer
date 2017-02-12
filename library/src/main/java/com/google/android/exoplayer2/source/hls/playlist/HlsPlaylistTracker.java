@@ -112,7 +112,9 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
       EventDispatcher eventDispatcher, int minRetryCount,
       PrimaryPlaylistListener primaryPlaylistListener) {
 
+    // Playlist的Uri
     this.initialPlaylistUri = initialPlaylistUri;
+
     this.dataSourceFactory = dataSourceFactory;
     this.eventDispatcher = eventDispatcher;
     this.minRetryCount = minRetryCount;
@@ -153,8 +155,7 @@ public final class HlsPlaylistTracker implements Loader.Callback<ParsingLoadable
     // 下载: Playlist, 并且通过 playlistParser 来解析
     // dataSourceFactory.createDataSource() 指定了网络请求
     ParsingLoadable<HlsPlaylist> masterPlaylistLoadable =
-            new ParsingLoadable<>(dataSourceFactory.createDataSource(),
-                    initialPlaylistUri, C.DATA_TYPE_MANIFEST, playlistParser);
+            new ParsingLoadable<>(dataSourceFactory.createDataSource(), initialPlaylistUri, C.DATA_TYPE_MANIFEST, playlistParser);
 
     // this Loader callback
     initialPlaylistLoader.startLoading(masterPlaylistLoadable, this, minRetryCount);

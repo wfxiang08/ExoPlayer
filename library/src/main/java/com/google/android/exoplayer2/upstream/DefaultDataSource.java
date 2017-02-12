@@ -119,6 +119,8 @@ public final class DefaultDataSource implements DataSource {
     } else {
       dataSource = baseDataSource;
     }
+
+    // 默认的DataSource可以处理各种DataSpec
     // Open the source and return.
     return dataSource.open(dataSpec);
   }

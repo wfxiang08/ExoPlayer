@@ -200,17 +200,28 @@ final class ExoPlayerImpl implements ExoPlayer {
 
   @Override
   public void seekTo(int windowIndex, long positionMs) {
+    // 这个如何实施呢?
+    // windowIndex必须有效；并且windowIndex在timeline的合适的位置
     if (windowIndex < 0 || (!timeline.isEmpty() && windowIndex >= timeline.getWindowCount())) {
       throw new IllegalSeekPositionException(timeline, windowIndex, positionMs);
     }
+
     pendingSeekAcks++;
     maskingWindowIndex = windowIndex;
+
+    // 位置不定?
     if (positionMs == C.TIME_UNSET) {
       maskingWindowPositionMs = 0;
       internalPlayer.seekTo(timeline, windowIndex, C.TIME_UNSET);
     } else {
+      // 假定现在: duration知道, timeline也有，那么具体如何实现?
+      // 1. 往后拖
+      // 2. 往前拖
+      //    会触发什么动作？ 对应什么网络请求呢？
       maskingWindowPositionMs = positionMs;
       internalPlayer.seekTo(timeline, windowIndex, C.msToUs(positionMs));
+
+      // 所有的listeners需要处理Position的变化，例如: OKHttp的Cache(因为网络请求的文件是只能读取一次，因此不可能往回rewind)
       for (EventListener listener : listeners) {
         listener.onPositionDiscontinuity();
       }

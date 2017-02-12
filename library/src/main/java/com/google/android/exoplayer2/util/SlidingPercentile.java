@@ -58,6 +58,7 @@ public final class SlidingPercentile {
   private final int maxWeight;
   private final ArrayList<Sample> samples;
 
+  // 实现对Sample的重复利用；降低GC开销
   private final Sample[] recycledSamples;
 
   private int currentSortOrder;
@@ -79,22 +80,27 @@ public final class SlidingPercentile {
    * Adds a new weighted value.
    *
    * @param weight The weight of the new observation.
-   * @param value The value of the new observation.
+   * @param value  The value of the new observation.
    */
   public void addSample(int weight, float value) {
+
+    // 权重: 和传输的数据量有关
     ensureSortedByIndex();
 
-    Sample newSample = recycledSampleCount > 0 ? recycledSamples[--recycledSampleCount]
-        : new Sample();
+    Sample newSample = recycledSampleCount > 0 ? recycledSamples[--recycledSampleCount] : new Sample();
     newSample.index = nextSampleIndex++;
     newSample.weight = weight;
     newSample.value = value;
     samples.add(newSample);
     totalWeight += weight;
 
+
     while (totalWeight > maxWeight) {
       int excessWeight = totalWeight - maxWeight;
+
       Sample oldestSample = samples.get(0);
+
+      // 删除过期的元素
       if (oldestSample.weight <= excessWeight) {
         totalWeight -= oldestSample.weight;
         samples.remove(0);
@@ -102,6 +108,7 @@ public final class SlidingPercentile {
           recycledSamples[recycledSampleCount++] = oldestSample;
         }
       } else {
+        // 降低最旧元素的权重
         oldestSample.weight -= excessWeight;
         totalWeight -= excessWeight;
       }
@@ -118,6 +125,8 @@ public final class SlidingPercentile {
     ensureSortedByValue();
     float desiredWeight = percentile * totalWeight;
     int accumulatedWeight = 0;
+
+    // 按照value排序，然后再按照权重来选择一个带宽估计
     for (int i = 0; i < samples.size(); i++) {
       Sample currentSample = samples.get(i);
       accumulatedWeight += currentSample.weight;
@@ -149,6 +158,7 @@ public final class SlidingPercentile {
     }
   }
 
+  // 权重，value
   private static class Sample {
 
     public int index;

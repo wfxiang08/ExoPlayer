@@ -16,23 +16,28 @@
 package com.google.android.exoplayer2;
 
 /**
- * A representation of media currently available for playback.
+ * A representation of media currently available for playback. 当前可以播放的Media的表示?
+ *
  * <p>
  * Timeline instances are immutable. For cases where the available media is changing dynamically
  * (e.g. live streams) a timeline provides a snapshot of the media currently available.
  * <p>
- * A timeline consists of related {@link Period}s and {@link Window}s. A period defines a single
- * logical piece of media, for example a media file. A window spans one or more periods, defining
- * the region within those periods that's currently available for playback along with additional
- * information such as whether seeking is supported within the window. Each window defines a default
- * position, which is the position from which playback will start when the player starts playing the
+ * A timeline consists of related {@link Period}s and {@link Window}s.
+ *
+ * A period defines a single logical piece of media, for example a media file.
+ * 一个Period, 例如: 一个ts对应一个时间段
+ * A window spans one or more periods, defining the region within those periods that's currently available for playback along with additional
+ * information such as whether seeking is supported within the window.
+ * window可以跨越多个Periods, 是否支持seeking
+ *
+ * Each window defines a default position, which is the position from which playback will start when the player starts playing the
  * window. The following examples illustrate timelines for various use cases.
  *
  * <h3 id="single-file">Single media file or on-demand stream</h3>
  * <p align="center">
  *   <img src="doc-files/timeline-single-file.svg" alt="Example timeline for a single file">
  * </p>
- * A timeline for a single media file or on-demand stream consists of a single period and window.
+ * A timeline for a single media file or on-demand stream  consists of a single period and window. 单一文件: 一个Period和window
  * The window spans the whole period, indicating that all parts of the media are available for
  * playback. The window's default position is typically at the start of the period (indicated by the
  * black dot in the figure above).
@@ -47,6 +52,7 @@ package com.google.android.exoplayer2;
  * their durations and whether the window is seekable) will often only become known when the player
  * starts buffering the corresponding file or stream.
  *
+ * 有长度限制的直播
  * <h3 id="live-limited">Live stream with limited availability</h3>
  * <p align="center">
  *   <img src="doc-files/timeline-live-limited.svg" alt="Example timeline for a live stream with
@@ -59,6 +65,7 @@ package com.google.android.exoplayer2;
  * the stream is still live. Its default position is typically near to the live edge (indicated by
  * the black dot in the figure above).
  *
+ * 长度未知的直播
  * <h3>Live stream with indefinite availability</h3>
  * <p align="center">
  *   <img src="doc-files/timeline-live-indefinite.svg" alt="Example timeline for a live stream with
@@ -91,9 +98,7 @@ package com.google.android.exoplayer2;
  */
 public abstract class Timeline {
 
-  /**
-   * An empty timeline.
-   */
+  // 空的Timeline, 没有Period, 没有Window
   public static final Timeline EMPTY = new Timeline() {
 
     @Override
@@ -172,8 +177,7 @@ public abstract class Timeline {
    *     default start position should be projected.
    * @return The populated {@link Window}, for convenience.
    */
-  public abstract Window getWindow(int windowIndex, Window window, boolean setIds,
-      long defaultPositionProjectionUs);
+  public abstract Window getWindow(int windowIndex, Window window, boolean setIds, long defaultPositionProjectionUs);
 
   /**
    * Returns the number of periods in the timeline.

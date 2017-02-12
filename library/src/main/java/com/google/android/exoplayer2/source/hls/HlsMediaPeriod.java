@@ -114,6 +114,7 @@ public final class HlsMediaPeriod implements MediaPeriod, HlsSampleStreamWrapper
   @Override
   public long selectTracks(TrackSelection[] selections, boolean[] mayRetainStreamFlags,
                            SampleStream[] streams, boolean[] streamResetFlags, long positionUs) {
+
     // Map each selection and stream onto a child period index.
     int[] streamChildIndices = new int[selections.length];
     int[] selectionChildIndices = new int[selections.length];
@@ -224,6 +225,7 @@ public final class HlsMediaPeriod implements MediaPeriod, HlsSampleStreamWrapper
   @Override
   public long seekToUs(long positionUs) {
     timestampAdjusterProvider.reset();
+    // 所有的SampleStreamWrapper, seek？
     for (HlsSampleStreamWrapper sampleStreamWrapper : enabledSampleStreamWrappers) {
       sampleStreamWrapper.seekTo(positionUs);
     }

@@ -128,6 +128,8 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
     this.trackType = trackType;
     this.callback = callback;
     this.chunkSource = chunkSource;
+
+    
     this.allocator = allocator;
     this.muxedAudioFormat = muxedAudioFormat;
     this.muxedCaptionFormat = muxedCaptionFormat;
@@ -223,7 +225,11 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
 
   public void seekTo(long positionUs) {
     lastSeekPositionUs = positionUs;
+
+    // 跳转到什么地方再开始播放？
     pendingResetPositionUs = positionUs;
+
+
     loadingFinished = false;
     mediaChunks.clear();
     if (loader.isLoading()) {
@@ -317,7 +323,8 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
             lastSeekPositionUs);
   }
 
-  /* package */ void skipToKeyframeBefore(int group, long timeUs) {
+  /* package */
+  void skipToKeyframeBefore(int group, long timeUs) {
     sampleQueues.valueAt(group).skipToKeyframeBefore(timeUs);
   }
 
@@ -333,15 +340,20 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
 
   // SequenceableLoader implementation
 
+  // 是否继续加载?
   @Override
   public boolean continueLoading(long positionUs) {
     if (loadingFinished || loader.isLoading()) {
       return false;
     }
 
+    // 继续加载:
+    // 注意这个指定的positionUs
     chunkSource.getNextChunk(mediaChunks.isEmpty() ? null : mediaChunks.getLast(),
             pendingResetPositionUs != C.TIME_UNSET ? pendingResetPositionUs : positionUs,
             nextChunkHolder);
+
+    // 获取下载一个chunk之后?
     boolean endOfStream = nextChunkHolder.endOfStream;
     Chunk loadable = nextChunkHolder.chunk;
     HlsMasterPlaylist.HlsUrl playlistToLoad = nextChunkHolder.playlist;
@@ -352,6 +364,7 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
       return true;
     }
 
+    // 如果没有可下载的数据，则需要Refresh Hls文件
     if (loadable == null) {
       if (playlistToLoad != null) {
         callback.onPlaylistRefreshRequired(playlistToLoad);
@@ -365,7 +378,12 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
       mediaChunk.init(this);
       mediaChunks.add(mediaChunk);
     }
+
+    // TODO: 开始下载数据: loadable, 也即是一个HLSChunk, 一个TS文件
     long elapsedRealtimeMs = loader.startLoading(loadable, this, minLoadableRetryCount);
+    // 接下来关注: #onLoadCompleted
+
+    // 通知开始下载
     eventDispatcher.loadStarted(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
             loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
             loadable.endTimeUs, elapsedRealtimeMs);
@@ -385,10 +403,17 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
 
   @Override
   public void onLoadCompleted(Chunk loadable, long elapsedRealtimeMs, long loadDurationMs) {
+
+    // ChunkSource下载完毕
+    // 主要是做一些解密之类的工作，默认情况下可以跳过(主要是为了学习)
     chunkSource.onChunkLoadCompleted(loadable);
+
+
     eventDispatcher.loadCompleted(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
             loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
             loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
+
+    // 是否继续下载呢?
     if (!prepared) {
       continueLoading(lastSeekPositionUs);
     } else {
@@ -402,6 +427,8 @@ final class HlsSampleStreamWrapper implements Loader.Callback<Chunk>,
     eventDispatcher.loadCanceled(loadable.dataSpec, loadable.type, trackType, loadable.trackFormat,
             loadable.trackSelectionReason, loadable.trackSelectionData, loadable.startTimeUs,
             loadable.endTimeUs, elapsedRealtimeMs, loadDurationMs, loadable.bytesLoaded());
+
+    // 下载取消
     if (!released) {
       int sampleQueueCount = sampleQueues.size();
       for (int i = 0; i < sampleQueueCount; i++) {

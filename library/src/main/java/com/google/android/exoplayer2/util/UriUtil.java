@@ -82,6 +82,9 @@ public final class UriUtil {
    * @param referenceUri The reference URI to resolve.
    */
   public static String resolve(String baseUri, String referenceUri) {
+    // 实现两个URL的合并操作
+    // BaseURL， 以及一个相对的URL --> 绝对URL
+    //
     StringBuilder uri = new StringBuilder();
 
     // Map null onto empty string, to make the following logic simpler.

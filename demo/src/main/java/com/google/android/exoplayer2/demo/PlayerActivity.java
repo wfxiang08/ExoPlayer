@@ -69,6 +69,7 @@ import com.google.android.exoplayer2.util.Util;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -299,8 +300,10 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
       player.setVideoDebugListener(eventLogger);
       player.setId3Output(eventLogger);
 
+      // Player 和 View的结合
       simpleExoPlayerView.setPlayer(player);
 
+      // 如何执行seek操作呢?
       if (isTimelineStatic) {
         if (playerPosition == C.TIME_UNSET) {
           player.seekToDefaultPosition(playerWindow);
@@ -311,6 +314,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
 
       // 自动播放
       player.setPlayWhenReady(shouldAutoPlay);
+
       debugViewHelper = new DebugTextViewHelper(player, debugTextView);
       debugViewHelper.start();
       playerNeedsSource = true;
@@ -374,6 +378,7 @@ public class PlayerActivity extends Activity implements OnClickListener, ExoPlay
             new DefaultDashChunkSource.Factory(mediaDataSourceFactory), mainHandler, eventLogger);
       case C.TYPE_HLS:
         // 如何使用Hls格式的文件呢?
+        uri = Uri.parse("https://d2odow79s717pv.cloudfront.net/test/transcoding/recordings/6755399282198623/hls-low/playlist.m3u8");
         return new HlsMediaSource(uri, mediaDataSourceFactory, mainHandler, eventLogger);
       case C.TYPE_OTHER:
         return new ExtractorMediaSource(uri, mediaDataSourceFactory, new DefaultExtractorsFactory(),

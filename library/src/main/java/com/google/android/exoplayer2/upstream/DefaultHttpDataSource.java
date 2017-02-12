@@ -18,10 +18,12 @@ package com.google.android.exoplayer2.upstream;
 import android.net.Uri;
 import android.text.TextUtils;
 import android.util.Log;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Predicate;
 import com.google.android.exoplayer2.util.Util;
+
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,7 +64,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
   private static final int MAX_REDIRECTS = 20; // Same limit as okhttp.
   private static final long MAX_BYTES_TO_DRAIN = 2048;
   private static final Pattern CONTENT_RANGE_HEADER =
-      Pattern.compile("^bytes (\\d+)-(\\d+)/(\\d+)$");
+          Pattern.compile("^bytes (\\d+)-(\\d+)/(\\d+)$");
   private static final AtomicReference<byte[]> skipBufferReference = new AtomicReference<>();
 
   private final boolean allowCrossProtocolRedirects;
@@ -85,62 +87,62 @@ public class DefaultHttpDataSource implements HttpDataSource {
   private long bytesRead;
 
   /**
-   * @param userAgent The User-Agent string that should be used.
+   * @param userAgent            The User-Agent string that should be used.
    * @param contentTypePredicate An optional {@link Predicate}. If a content type is rejected by the
-   *     predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
-   *     {@link #open(DataSpec)}.
+   *                             predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
+   *                             {@link #open(DataSpec)}.
    */
   public DefaultHttpDataSource(String userAgent, Predicate<String> contentTypePredicate) {
     this(userAgent, contentTypePredicate, null);
   }
 
   /**
-   * @param userAgent The User-Agent string that should be used.
+   * @param userAgent            The User-Agent string that should be used.
    * @param contentTypePredicate An optional {@link Predicate}. If a content type is rejected by the
-   *     predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
-   *     {@link #open(DataSpec)}.
-   * @param listener An optional listener.
+   *                             predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
+   *                             {@link #open(DataSpec)}.
+   * @param listener             An optional listener.
    */
   public DefaultHttpDataSource(String userAgent, Predicate<String> contentTypePredicate,
-      TransferListener<? super DefaultHttpDataSource> listener) {
+                               TransferListener<? super DefaultHttpDataSource> listener) {
     this(userAgent, contentTypePredicate, listener, DEFAULT_CONNECT_TIMEOUT_MILLIS,
-        DEFAULT_READ_TIMEOUT_MILLIS);
+            DEFAULT_READ_TIMEOUT_MILLIS);
   }
 
   /**
-   * @param userAgent The User-Agent string that should be used.
+   * @param userAgent            The User-Agent string that should be used.
    * @param contentTypePredicate An optional {@link Predicate}. If a content type is rejected by the
-   *     predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
-   *     {@link #open(DataSpec)}.
-   * @param listener An optional listener.
+   *                             predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
+   *                             {@link #open(DataSpec)}.
+   * @param listener             An optional listener.
    * @param connectTimeoutMillis The connection timeout, in milliseconds. A timeout of zero is
-   *     interpreted as an infinite timeout.
-   * @param readTimeoutMillis The read timeout, in milliseconds. A timeout of zero is interpreted
-   *     as an infinite timeout.
+   *                             interpreted as an infinite timeout.
+   * @param readTimeoutMillis    The read timeout, in milliseconds. A timeout of zero is interpreted
+   *                             as an infinite timeout.
    */
   public DefaultHttpDataSource(String userAgent, Predicate<String> contentTypePredicate,
-      TransferListener<? super DefaultHttpDataSource> listener, int connectTimeoutMillis,
-      int readTimeoutMillis) {
+                               TransferListener<? super DefaultHttpDataSource> listener, int connectTimeoutMillis,
+                               int readTimeoutMillis) {
     this(userAgent, contentTypePredicate, listener, connectTimeoutMillis, readTimeoutMillis, false);
   }
 
   /**
-   * @param userAgent The User-Agent string that should be used.
-   * @param contentTypePredicate An optional {@link Predicate}. If a content type is rejected by the
-   *     predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
-   *     {@link #open(DataSpec)}.
-   * @param listener An optional listener.
-   * @param connectTimeoutMillis The connection timeout, in milliseconds. A timeout of zero is
-   *     interpreted as an infinite timeout. Pass {@link #DEFAULT_CONNECT_TIMEOUT_MILLIS} to use
-   *     the default value.
-   * @param readTimeoutMillis The read timeout, in milliseconds. A timeout of zero is interpreted
-   *     as an infinite timeout. Pass {@link #DEFAULT_READ_TIMEOUT_MILLIS} to use the default value.
+   * @param userAgent                   The User-Agent string that should be used.
+   * @param contentTypePredicate        An optional {@link Predicate}. If a content type is rejected by the
+   *                                    predicate then a {@link HttpDataSource.InvalidContentTypeException} is thrown from
+   *                                    {@link #open(DataSpec)}.
+   * @param listener                    An optional listener.
+   * @param connectTimeoutMillis        The connection timeout, in milliseconds. A timeout of zero is
+   *                                    interpreted as an infinite timeout. Pass {@link #DEFAULT_CONNECT_TIMEOUT_MILLIS} to use
+   *                                    the default value.
+   * @param readTimeoutMillis           The read timeout, in milliseconds. A timeout of zero is interpreted
+   *                                    as an infinite timeout. Pass {@link #DEFAULT_READ_TIMEOUT_MILLIS} to use the default value.
    * @param allowCrossProtocolRedirects Whether cross-protocol redirects (i.e. redirects from HTTP
-   *     to HTTPS and vice versa) are enabled.
+   *                                    to HTTPS and vice versa) are enabled.
    */
   public DefaultHttpDataSource(String userAgent, Predicate<String> contentTypePredicate,
-      TransferListener<? super DefaultHttpDataSource> listener, int connectTimeoutMillis,
-      int readTimeoutMillis, boolean allowCrossProtocolRedirects) {
+                               TransferListener<? super DefaultHttpDataSource> listener, int connectTimeoutMillis,
+                               int readTimeoutMillis, boolean allowCrossProtocolRedirects) {
     this.userAgent = Assertions.checkNotEmpty(userAgent);
     this.contentTypePredicate = contentTypePredicate;
     this.listener = listener;
@@ -197,7 +199,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
       connection = makeConnection(dataSpec);
     } catch (IOException e) {
       throw new HttpDataSourceException("Unable to connect to " + dataSpec.uri.toString(), e,
-          dataSpec, HttpDataSourceException.TYPE_OPEN);
+              dataSpec, HttpDataSourceException.TYPE_OPEN);
     }
 
     int responseCode;
@@ -206,7 +208,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
     } catch (IOException e) {
       closeConnectionQuietly();
       throw new HttpDataSourceException("Unable to connect to " + dataSpec.uri.toString(), e,
-          dataSpec, HttpDataSourceException.TYPE_OPEN);
+              dataSpec, HttpDataSourceException.TYPE_OPEN);
     }
 
     // Check for a valid response code.
@@ -214,7 +216,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
       Map<String, List<String>> headers = connection.getHeaderFields();
       closeConnectionQuietly();
       InvalidResponseCodeException exception =
-          new InvalidResponseCodeException(responseCode, headers, dataSpec);
+              new InvalidResponseCodeException(responseCode, headers, dataSpec);
       if (responseCode == 416) {
         exception.initCause(new DataSourceException(DataSourceException.POSITION_OUT_OF_RANGE));
       }
@@ -231,6 +233,9 @@ public class DefaultHttpDataSource implements HttpDataSource {
     // If we requested a range starting from a non-zero position and received a 200 rather than a
     // 206, then the server does not support partial requests. We'll need to manually skip to the
     // requested position.
+    // Range Request返回的code:
+    // 200
+    // 206的区别
     bytesToSkip = responseCode == 200 && dataSpec.position != 0 ? dataSpec.position : 0;
 
     // Determine the length of the data to be read, after skipping.
@@ -240,7 +245,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
       } else {
         long contentLength = getContentLength(connection);
         bytesToRead = contentLength != C.LENGTH_UNSET ? (contentLength - bytesToSkip)
-            : C.LENGTH_UNSET;
+                : C.LENGTH_UNSET;
       }
     } else {
       // Gzip is enabled. If the server opts to use gzip then the content length in the response
@@ -359,16 +364,16 @@ public class DefaultHttpDataSource implements HttpDataSource {
     // We need to handle redirects ourselves to allow cross-protocol redirects.
     int redirectCount = 0;
     while (redirectCount++ <= MAX_REDIRECTS) {
-      HttpURLConnection connection = makeConnection(
-          url, postBody, position, length, allowGzip, false /* followRedirects */);
+      HttpURLConnection connection = makeConnection(url, postBody, position, length, allowGzip, false); /* followRedirects */
+
       int responseCode = connection.getResponseCode();
       if (responseCode == HttpURLConnection.HTTP_MULT_CHOICE
-          || responseCode == HttpURLConnection.HTTP_MOVED_PERM
-          || responseCode == HttpURLConnection.HTTP_MOVED_TEMP
-          || responseCode == HttpURLConnection.HTTP_SEE_OTHER
-          || (postBody == null
+              || responseCode == HttpURLConnection.HTTP_MOVED_PERM
+              || responseCode == HttpURLConnection.HTTP_MOVED_TEMP
+              || responseCode == HttpURLConnection.HTTP_SEE_OTHER
+              || (postBody == null
               && (responseCode == 307 /* HTTP_TEMP_REDIRECT */
-                  || responseCode == 308 /* HTTP_PERM_REDIRECT */))) {
+              || responseCode == 308 /* HTTP_PERM_REDIRECT */))) {
         // For 300, 301, 302, and 303 POST requests follow the redirect and are transformed into
         // GET requests. For 307 and 308 POST requests are not redirected.
         postBody = null;
@@ -387,15 +392,15 @@ public class DefaultHttpDataSource implements HttpDataSource {
   /**
    * Configures a connection and opens it.
    *
-   * @param url The url to connect to.
-   * @param postBody The body data for a POST request.
-   * @param position The byte offset of the requested data.
-   * @param length The length of the requested data, or {@link C#LENGTH_UNSET}.
-   * @param allowGzip Whether to allow the use of gzip.
+   * @param url             The url to connect to.
+   * @param postBody        The body data for a POST request.
+   * @param position        The byte offset of the requested data.
+   * @param length          The length of the requested data, or {@link C#LENGTH_UNSET}.
+   * @param allowGzip       Whether to allow the use of gzip.
    * @param followRedirects Whether to follow redirects.
    */
   private HttpURLConnection makeConnection(URL url, byte[] postBody, long position,
-      long length, boolean allowGzip, boolean followRedirects) throws IOException {
+                                           long length, boolean allowGzip, boolean followRedirects) throws IOException {
     // 新建Connection
     HttpURLConnection connection = (HttpURLConnection) url.openConnection();
     connection.setConnectTimeout(connectTimeoutMillis);
@@ -405,6 +410,9 @@ public class DefaultHttpDataSource implements HttpDataSource {
         connection.setRequestProperty(property.getKey(), property.getValue());
       }
     }
+
+    // connection
+    // Range参数的设置
     if (!(position == 0 && length == C.LENGTH_UNSET)) {
       String rangeRequest = "bytes=" + position + "-";
       if (length != C.LENGTH_UNSET) {
@@ -413,18 +421,23 @@ public class DefaultHttpDataSource implements HttpDataSource {
       connection.setRequestProperty("Range", rangeRequest);
     }
     connection.setRequestProperty("User-Agent", userAgent);
+
+    // 如果不支持Gzip？
     if (!allowGzip) {
       connection.setRequestProperty("Accept-Encoding", "identity");
     }
     connection.setInstanceFollowRedirects(followRedirects);
     connection.setDoOutput(postBody != null);
+
     if (postBody != null) {
       connection.setRequestMethod("POST");
       if (postBody.length == 0) {
         connection.connect();
-      } else  {
+      } else {
         connection.setFixedLengthStreamingMode(postBody.length);
         connection.connect();
+
+        // 连接之后如何设置post body
         OutputStream os = connection.getOutputStream();
         os.write(postBody);
         os.close();
@@ -439,7 +452,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
    * Handles a redirect.
    *
    * @param originalUrl The original URL.
-   * @param location The Location header in the response.
+   * @param location    The Location header in the response.
    * @return The next URL.
    * @throws IOException If redirection isn't possible.
    */
@@ -486,7 +499,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
       if (matcher.find()) {
         try {
           long contentLengthFromRange =
-              Long.parseLong(matcher.group(2)) - Long.parseLong(matcher.group(1)) + 1;
+                  Long.parseLong(matcher.group(2)) - Long.parseLong(matcher.group(1)) + 1;
           if (contentLength < 0) {
             // Some proxy servers strip the Content-Length header. Fall back to the length
             // calculated here in this case.
@@ -497,7 +510,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
             // change one of them to reduce the size of a request, but it is unlikely anybody would
             // increase it.
             Log.w(TAG, "Inconsistent headers [" + contentLengthHeader + "] [" + contentRangeHeader
-                + "]");
+                    + "]");
             contentLength = Math.max(contentLength, contentLengthFromRange);
           }
         } catch (NumberFormatException e) {
@@ -514,7 +527,7 @@ public class DefaultHttpDataSource implements HttpDataSource {
    * This implementation is based roughly on {@code libcore.io.Streams.skipByReading()}.
    *
    * @throws InterruptedIOException If the thread is interrupted during the operation.
-   * @throws EOFException If the end of the input stream is reached before the bytes are skipped.
+   * @throws EOFException           If the end of the input stream is reached before the bytes are skipped.
    */
   private void skipInternal() throws IOException {
     if (bytesSkipped == bytesToSkip) {
@@ -553,11 +566,11 @@ public class DefaultHttpDataSource implements HttpDataSource {
    * This method blocks until at least one byte of data can be read, the end of the opened range is
    * detected, or an exception is thrown.
    *
-   * @param buffer The buffer into which the read data should be stored.
-   * @param offset The start offset into {@code buffer} at which data should be written.
+   * @param buffer     The buffer into which the read data should be stored.
+   * @param offset     The start offset into {@code buffer} at which data should be written.
    * @param readLength The maximum number of bytes to read.
    * @return The number of bytes read, or {@link C#RESULT_END_OF_INPUT} if the end of the opened
-   *     range is reached.
+   * range is reached.
    * @throws IOException If an error occurs reading from the source.
    */
   private int readInternal(byte[] buffer, int offset, int readLength) throws IOException {
@@ -595,9 +608,9 @@ public class DefaultHttpDataSource implements HttpDataSource {
    * unexpected end of input, working around this issue. On other platform API levels, the method
    * does nothing.
    *
-   * @param connection The connection whose {@link InputStream} should be terminated.
+   * @param connection     The connection whose {@link InputStream} should be terminated.
    * @param bytesRemaining The number of bytes remaining to be read from the input stream if its
-   *     length is known. {@link C#LENGTH_UNSET} otherwise.
+   *                       length is known. {@link C#LENGTH_UNSET} otherwise.
    */
   private static void maybeTerminateInputStream(HttpURLConnection connection, long bytesRemaining) {
     if (Util.SDK_INT != 19 && Util.SDK_INT != 20) {
@@ -618,8 +631,8 @@ public class DefaultHttpDataSource implements HttpDataSource {
       }
       String className = inputStream.getClass().getName();
       if (className.equals("com.android.okhttp.internal.http.HttpTransport$ChunkedInputStream")
-          || className.equals(
-          "com.android.okhttp.internal.http.HttpTransport$FixedLengthInputStream")) {
+              || className.equals(
+              "com.android.okhttp.internal.http.HttpTransport$FixedLengthInputStream")) {
         Class<?> superclass = inputStream.getClass().getSuperclass();
         Method unexpectedEndOfInput = superclass.getDeclaredMethod("unexpectedEndOfInput");
         unexpectedEndOfInput.setAccessible(true);

@@ -65,6 +65,8 @@ public final class HlsMediaSource implements MediaSource,
     this.manifestUri = manifestUri;
     this.dataSourceFactory = dataSourceFactory;
     this.minLoadableRetryCount = minLoadableRetryCount;
+
+    // 如何处理HlsMediaSource呢?
     eventDispatcher = new EventDispatcher(eventHandler, eventListener);
   }
 
@@ -73,8 +75,7 @@ public final class HlsMediaSource implements MediaSource,
     Assertions.checkState(playlistTracker == null);
     // 例如:
     //       manifestUri = https://devimages.apple.com.edgekey.net/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8
-    playlistTracker = new HlsPlaylistTracker(manifestUri, dataSourceFactory, eventDispatcher,
-        minLoadableRetryCount, this);
+    playlistTracker = new HlsPlaylistTracker(manifestUri, dataSourceFactory, eventDispatcher, minLoadableRetryCount, this);
 
     sourceListener = listener;
     playlistTracker.start();
@@ -116,7 +117,11 @@ public final class HlsMediaSource implements MediaSource,
       timeline = new SinglePeriodTimeline(C.TIME_UNSET, playlist.durationUs,
           playlist.startTimeUs, windowDefaultStartPositionUs, true, !playlist.hasEndTag);
     } else /* not live */ {
+
       // 这个是我们关注的信息
+      // Window/Timeline
+      // XXX: 一个m3u8文件对应一个 SinglePeriodTimeline
+      //
       timeline = new SinglePeriodTimeline(playlist.startTimeUs + playlist.durationUs,
           playlist.durationUs, playlist.startTimeUs, 0, true, false);
     }

@@ -121,6 +121,7 @@ public final class DefaultLoadControl implements LoadControl {
     bufferForPlaybackAfterRebufferUs = bufferForPlaybackAfterRebufferMs * 1000L;
   }
 
+  // 重置内部各种状态
   @Override
   public void onPrepared() {
     reset(false);

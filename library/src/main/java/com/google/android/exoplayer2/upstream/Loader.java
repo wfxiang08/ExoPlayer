@@ -157,13 +157,13 @@ public final class Loader implements LoaderErrorThrower {
    * @throws IllegalStateException If the calling thread does not have an associated {@link Looper}.
    * @return {@link SystemClock#elapsedRealtime} when the load started.
    */
-  public <T extends Loadable> long startLoading(T loadable, Callback<T> callback,
-      int defaultMinRetryCount) {
+  public <T extends Loadable> long startLoading(T loadable, Callback<T> callback, int defaultMinRetryCount) {
     Looper looper = Looper.myLooper();
     Assertions.checkState(looper != null);
     long startTimeMs = SystemClock.elapsedRealtime();
 
     // 创建一个LoadTask
+    // 在当前的线程中开始下载任务
     new LoadTask<>(looper, loadable, callback, defaultMinRetryCount, startTimeMs).start(0);
     return startTimeMs;
   }
@@ -292,6 +292,7 @@ public final class Loader implements LoaderErrorThrower {
     public void run() {
       try {
         executorThread = Thread.currentThread();
+        // 只要没有取消，就Load
         if (!loadable.isLoadCanceled()) {
           TraceUtil.beginSection("load:" + loadable.getClass().getSimpleName());
           try {
@@ -302,6 +303,8 @@ public final class Loader implements LoaderErrorThrower {
             TraceUtil.endSection();
           }
         }
+
+        // 加载成功，则通知下载完毕，下载时间，以及下载时长
         if (!released) {
           sendEmptyMessage(MSG_END_OF_SOURCE);
         }

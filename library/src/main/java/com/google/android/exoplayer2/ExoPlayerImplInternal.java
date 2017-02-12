@@ -229,10 +229,9 @@ final class ExoPlayerImplInternal implements Handler.Callback,
 
   // seekTo操作如何执行呢?
   //  可以seek到之前的某个位置，也可以seek到之后的某个位置；可能导致缓存失效
-  //
+  // 对于当前的需求: Timeline 是唯一的
   public void seekTo(Timeline timeline, int windowIndex, long positionUs) {
-    handler.obtainMessage(MSG_SEEK_TO, new SeekPosition(timeline, windowIndex, positionUs))
-            .sendToTarget();
+    handler.obtainMessage(MSG_SEEK_TO, new SeekPosition(timeline, windowIndex, positionUs)).sendToTarget();
   }
 
   public void stop() {
@@ -566,6 +565,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     }
   }
 
+  // 播放器具体执行SeekTo的操作
   private void seekToInternal(SeekPosition seekPosition) throws ExoPlaybackException {
     if (timeline == null) {
       pendingInitialSeekCount++;
@@ -573,6 +573,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       return;
     }
 
+    // 首先定位到具体的<PeriodIndex, PeriodPositionUs>
     Pair<Integer, Long> periodPosition = resolveSeekPosition(seekPosition);
 
     if (periodPosition == null) {
@@ -589,15 +590,18 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       return;
     }
 
+    // 获取到定位信息
     int periodIndex = periodPosition.first;
     long periodPositionUs = periodPosition.second;
 
     try {
+      // 如果定位信息没有变化，则直接跳过
       if (periodIndex == playbackInfo.periodIndex
               && ((periodPositionUs / 1000) == (playbackInfo.positionUs / 1000))) {
         // Seek position equals the current position. Do nothing.
         return;
       }
+      // 具体如何实施呢?
       periodPositionUs = seekToPeriodPosition(periodIndex, periodPositionUs);
     } finally {
       playbackInfo = new PlaybackInfo(periodIndex, periodPositionUs);
@@ -605,9 +609,11 @@ final class ExoPlayerImplInternal implements Handler.Callback,
     }
   }
 
-  private long seekToPeriodPosition(int periodIndex, long periodPositionUs)
-          throws ExoPlaybackException {
+  private long seekToPeriodPosition(int periodIndex, long periodPositionUs) throws ExoPlaybackException {
+    // 1. 需要暂停Renders
     stopRenderers();
+
+    // 2. 切换状态: Buffering
     rebuffering = false;
     setState(ExoPlayer.STATE_BUFFERING);
 
@@ -873,12 +879,18 @@ final class ExoPlayerImplInternal implements Handler.Callback,
 
   private void handleSourceInfoRefreshed(Pair<Timeline, Object> timelineAndManifest)
           throws ExoPlaybackException {
+
+    // TODO: Source的信息改变了
+    // 例如: m3u8文件改变了等
     Timeline oldTimeline = timeline;
     timeline = timelineAndManifest.first;
     Object manifest = timelineAndManifest.second;
 
     int processedInitialSeekCount = 0;
+
+    // 假设不存在oldTimeline
     if (oldTimeline == null) {
+      // 构建: playbackInfo
       if (pendingInitialSeekCount > 0) {
         Pair<Integer, Long> periodPosition = resolveSeekPosition(pendingSeekPosition);
         processedInitialSeekCount = pendingInitialSeekCount;
@@ -901,8 +913,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       }
     }
 
-    MediaPeriodHolder periodHolder = playingPeriodHolder != null ? playingPeriodHolder
-            : loadingPeriodHolder;
+    MediaPeriodHolder periodHolder = playingPeriodHolder != null ? playingPeriodHolder : loadingPeriodHolder;
     if (periodHolder == null) {
       // We don't have any period holders, so we're done.
       notifySourceInfoRefresh(manifest, processedInitialSeekCount);
@@ -1039,20 +1050,28 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       // knowledge of what the future timeline will be). Use the internal timeline.
       seekTimeline = timeline;
     }
+
     // Map the SeekPosition to a position in the corresponding timeline.
+    // 对于 SinglePeriodTimeline， windowIndex == 0
+    // 唯一存在变化的是: seekPosition.windowPositionUs
+    // 定位当前的Period, 以及periodPositionUs
     Pair<Integer, Long> periodPosition;
     try {
-      periodPosition = getPeriodPosition(seekTimeline, seekPosition.windowIndex,
-              seekPosition.windowPositionUs);
+      periodPosition = getPeriodPosition(seekTimeline, seekPosition.windowIndex, seekPosition.windowPositionUs);
     } catch (IndexOutOfBoundsException e) {
       // The window index of the seek position was outside the bounds of the timeline.
-      throw new IllegalSeekPositionException(timeline, seekPosition.windowIndex,
-              seekPosition.windowPositionUs);
+      throw new IllegalSeekPositionException(timeline, seekPosition.windowIndex,  seekPosition.windowPositionUs);
     }
+
+    //
+    // 如果timeline没有改变，那么会发生什么问题呢?
+    //
     if (timeline == seekTimeline) {
       // Our internal timeline is the seek timeline, so the mapped position is correct.
       return periodPosition;
     }
+
+
     // Attempt to find the mapped period in the internal timeline.
     int periodIndex = timeline.getIndexOfPeriod(
             seekTimeline.getPeriod(periodPosition.first, period, true).uid);
@@ -1081,8 +1100,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
    * Calls {@link #getPeriodPosition(Timeline, int, long, long)} with a zero default position
    * projection.
    */
-  private Pair<Integer, Long> getPeriodPosition(Timeline timeline, int windowIndex,
-                                                long windowPositionUs) {
+  private Pair<Integer, Long> getPeriodPosition(Timeline timeline, int windowIndex, long windowPositionUs) {
     return getPeriodPosition(timeline, windowIndex, windowPositionUs, 0);
   }
 
@@ -1099,19 +1117,26 @@ final class ExoPlayerImplInternal implements Handler.Callback,
    * is {@link C#TIME_UNSET}, {@code defaultPositionProjectionUs} is non-zero, and the window's
    * position could not be projected by {@code defaultPositionProjectionUs}.
    */
-  private Pair<Integer, Long> getPeriodPosition(Timeline timeline, int windowIndex,
-                                                long windowPositionUs, long defaultPositionProjectionUs) {
+  private Pair<Integer, Long> getPeriodPosition(Timeline timeline, int windowIndex, long windowPositionUs, long defaultPositionProjectionUs) {
     Assertions.checkIndex(windowIndex, 0, timeline.getWindowCount());
+
+    // 通过timeline设置当前的播放window
     timeline.getWindow(windowIndex, window, false, defaultPositionProjectionUs);
+
+    // 如果时间未定，则使用window的默认时间
+    // window: [start, ....]
     if (windowPositionUs == C.TIME_UNSET) {
       windowPositionUs = window.getDefaultPositionUs();
       if (windowPositionUs == C.TIME_UNSET) {
         return null;
       }
     }
+
     int periodIndex = window.firstPeriodIndex;
     long periodPositionUs = window.getPositionInFirstPeriodUs() + windowPositionUs;
     long periodDurationUs = timeline.getPeriod(periodIndex, period).getDurationUs();
+
+    // 一个Window可能包含多个Period, 因此定位到合适的Period, 然后返回<PeriodIndex, PeriodPositionUs>
     while (periodDurationUs != C.TIME_UNSET && periodPositionUs >= periodDurationUs
             && periodIndex < window.lastPeriodIndex) {
       periodPositionUs -= periodDurationUs;

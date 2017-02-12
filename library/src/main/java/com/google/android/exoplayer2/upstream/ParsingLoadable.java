@@ -109,15 +109,21 @@ public final class ParsingLoadable<T> implements Loadable {
 
   @Override
   public final void load() throws IOException, InterruptedException {
+    // 如何Load呢?
+    // 1. 通过 dataSource 和 dataSpec, 得到一个InputStream
     DataSourceInputStream inputStream = new DataSourceInputStream(dataSource, dataSpec);
     try {
+      // 2. 打开Stream
       inputStream.open();
 
-      // 如何解析数据呢?
+      // 3. 如何解析数据呢?
       result = parser.parse(dataSource.getUri(), inputStream);
     } finally {
+
       // 读取了多少数据？
       bytesLoaded = inputStream.bytesRead();
+
+      // 这个close很重要
       inputStream.close();
     }
   }

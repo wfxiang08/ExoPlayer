@@ -47,7 +47,7 @@ import java.util.Locale;
  * The following attributes can be set on a PlaybackControlView when used in a layout XML file:
  * <p>
  * <ul>
- *   <li><b>{@code show_timeout}</b> - The time between the last user interaction and the controls
+ *   <li>自动隐藏控件<b>{@code show_timeout}</b> - The time between the last user interaction and the controls
  *       being automatically hidden, in milliseconds. Use zero if the controls should not
  *       automatically timeout.
  *       <ul>
@@ -55,14 +55,14 @@ import java.util.Locale;
  *         <li>Default: {@link #DEFAULT_SHOW_TIMEOUT_MS}</li>
  *       </ul>
  *   </li>
- *   <li><b>{@code rewind_increment}</b> - The duration of the rewind applied when the user taps the
+ *   <li>倒回<b>{@code rewind_increment}</b> - The duration of the rewind applied when the user taps the
  *       rewind button, in milliseconds. Use zero to disable the rewind button.
  *       <ul>
  *         <li>Corresponding method: {@link #setRewindIncrementMs(int)}</li>
  *         <li>Default: {@link #DEFAULT_REWIND_MS}</li>
  *       </ul>
  *   </li>
- *   <li><b>{@code fastforward_increment}</b> - Like {@code rewind_increment}, but for fast forward.
+ *   <li>快进<b>{@code fastforward_increment}</b> - Like {@code rewind_increment}, but for fast forward.
  *       <ul>
  *         <li>Corresponding method: {@link #setFastForwardIncrementMs(int)}</li>
  *         <li>Default: {@link #DEFAULT_FAST_FORWARD_MS}</li>
@@ -181,6 +181,8 @@ public class PlaybackControlView extends FrameLayout {
 
     @Override
     public boolean dispatchSeek(ExoPlayer player, int windowIndex, long positionMs) {
+      // 如何Dispatch消息呢?
+      // 直接执行seekTo动作
       player.seekTo(windowIndex, positionMs);
       return true;
     }
@@ -241,6 +243,7 @@ public class PlaybackControlView extends FrameLayout {
     this(context, attrs, 0);
   }
 
+  // 通过XML设置个各种参数
   public PlaybackControlView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
 
@@ -262,6 +265,7 @@ public class PlaybackControlView extends FrameLayout {
         a.recycle();
       }
     }
+
     currentWindow = new Timeline.Window();
     formatBuilder = new StringBuilder();
     formatter = new Formatter(formatBuilder, Locale.getDefault());
@@ -499,8 +503,11 @@ public class PlaybackControlView extends FrameLayout {
     if (!isVisible() || !isAttachedToWindow) {
       return;
     }
+
+    // 根据player状态更新Control
     long duration = player == null ? 0 : player.getDuration();
     long position = player == null ? 0 : player.getCurrentPosition();
+
     if (durationView != null) {
       durationView.setText(stringForTime(duration));
     }
@@ -579,6 +586,7 @@ public class PlaybackControlView extends FrameLayout {
         : (int) ((position * PROGRESS_BAR_MAX) / duration);
   }
 
+  // 根据progress获取当前的position, 总时间 * 百分比
   private long positionValue(int progress) {
     long duration = player == null ? C.TIME_UNSET : player.getDuration();
     return duration == C.TIME_UNSET ? 0 : ((duration * progress) / PROGRESS_BAR_MAX);
@@ -616,6 +624,8 @@ public class PlaybackControlView extends FrameLayout {
     if (rewindMs <= 0) {
       return;
     }
+
+    // 后退
     seekTo(Math.max(player.getCurrentPosition() - rewindMs, 0));
   }
 
@@ -623,15 +633,21 @@ public class PlaybackControlView extends FrameLayout {
     if (fastForwardMs <= 0) {
       return;
     }
+    // 快进:
     seekTo(Math.min(player.getCurrentPosition() + fastForwardMs, player.getDuration()));
   }
 
   private void seekTo(long positionMs) {
+
     seekTo(player.getCurrentWindowIndex(), positionMs);
   }
 
   private void seekTo(int windowIndex, long positionMs) {
+    //
+    // windowIndex, positionMS两个参数如何协调呢?
+    //
     boolean dispatched = seekDispatcher.dispatchSeek(player, windowIndex, positionMs);
+
     if (!dispatched) {
       // The seek wasn't dispatched. If the progress bar was dragged by the user to perform the
       // seek then it'll now be in the wrong position. Trigger a progress update to snap it back.
@@ -724,6 +740,7 @@ public class PlaybackControlView extends FrameLayout {
         || keyCode == KeyEvent.KEYCODE_MEDIA_PREVIOUS;
   }
 
+  // 负责处理: Seekbar的进度控制
   private final class ComponentListener implements ExoPlayer.EventListener,
       SeekBar.OnSeekBarChangeListener, OnClickListener {
 
@@ -736,6 +753,7 @@ public class PlaybackControlView extends FrameLayout {
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
       if (fromUser && positionView != null) {
+        // 只更新进度信息，暂不是调整progress
         positionView.setText(stringForTime(positionValue(progress)));
       }
     }
@@ -744,6 +762,7 @@ public class PlaybackControlView extends FrameLayout {
     public void onStopTrackingTouch(SeekBar seekBar) {
       dragging = false;
       if (player != null) {
+        // 更新进度
         seekTo(positionValue(seekBar.getProgress()));
       }
       hideAfterTimeout();
