@@ -434,6 +434,8 @@ final class ExoPlayerImplInternal implements Handler.Callback,
   private void startRenderers() throws ExoPlaybackException {
     rebuffering = false;
     standaloneMediaClock.start();
+
+    // 不同的Renders是如何工作的?
     for (Renderer renderer : enabledRenderers) {
       renderer.start();
     }
@@ -518,9 +520,10 @@ final class ExoPlayerImplInternal implements Handler.Callback,
       setState(ExoPlayer.STATE_ENDED);
       stopRenderers();
     } else if (state == ExoPlayer.STATE_BUFFERING) {
-      boolean isNewlyReady = enabledRenderers.length > 0
-              ? (allRenderersReadyOrEnded && haveSufficientBuffer(rebuffering))
-              : isTimelineReady(playingPeriodDurationUs);
+      // 如果正在Buffering中，是否Ready
+      boolean isNewlyReady = enabledRenderers.length > 0 ? (allRenderersReadyOrEnded && haveSufficientBuffer(rebuffering)) : isTimelineReady(playingPeriodDurationUs);
+
+      // 开始播放
       if (isNewlyReady) {
         setState(ExoPlayer.STATE_READY);
         if (playWhenReady) {
@@ -849,10 +852,12 @@ final class ExoPlayerImplInternal implements Handler.Callback,
             || (playingPeriodHolder.next != null && playingPeriodHolder.next.prepared);
   }
 
+  // 是否有足够的Buffer呢?
   private boolean haveSufficientBuffer(boolean rebuffering) {
     long loadingPeriodBufferedPositionUs = !loadingPeriodHolder.prepared
             ? loadingPeriodHolder.startPositionUs
             : loadingPeriodHolder.mediaPeriod.getBufferedPositionUs();
+
     if (loadingPeriodBufferedPositionUs == C.TIME_END_OF_SOURCE) {
       if (loadingPeriodHolder.isLast) {
         return true;
@@ -1332,18 +1337,23 @@ final class ExoPlayerImplInternal implements Handler.Callback,
   // 播放器是否继续加载数据呢?
   private void maybeContinueLoading() {
 
-    long nextLoadPositionUs = !loadingPeriodHolder.prepared ? 0
-            : loadingPeriodHolder.mediaPeriod.getNextLoadPositionUs();
+    long nextLoadPositionUs = !loadingPeriodHolder.prepared ? 0 : loadingPeriodHolder.mediaPeriod.getNextLoadPositionUs();
 
 
     if (nextLoadPositionUs == C.TIME_END_OF_SOURCE) {
       // 文件加载完毕，则停止loading
       setIsLoading(false);
     } else {
+      // 当前正在播放的位置
       long loadingPeriodPositionUs = loadingPeriodHolder.toPeriodTime(rendererPositionUs);
+
+      // 已经缓存了多少数据
       long bufferedDurationUs = nextLoadPositionUs - loadingPeriodPositionUs;
+
+      // 是否该继续Loading呢?
       boolean continueLoading = loadControl.shouldContinueLoading(bufferedDurationUs);
       setIsLoading(continueLoading);
+
       if (continueLoading) {
         loadingPeriodHolder.needsContinueLoading = false;
         loadingPeriodHolder.mediaPeriod.continueLoading(loadingPeriodPositionUs);
