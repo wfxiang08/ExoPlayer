@@ -522,7 +522,8 @@ final class ExoPlayerImplInternal implements Handler.Callback,
             // 如果正在Buffering中，是否Ready
             boolean isNewlyReady = enabledRenderers.length > 0 ? (allRenderersReadyOrEnded && haveSufficientBuffer(rebuffering)) : isTimelineReady(playingPeriodDurationUs);
 
-            // 开始播放
+            // 状态机切换:
+            // 不可以播放 --> 开始播放
             if (isNewlyReady) {
                 setState(ExoPlayer.STATE_READY);
                 if (playWhenReady) {
@@ -855,6 +856,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
 
     // 是否有足够的Buffer呢?
     private boolean haveSufficientBuffer(boolean rebuffering) {
+        // 当前Buffer的数据的位置
         long loadingPeriodBufferedPositionUs = !loadingPeriodHolder.prepared
                 ? loadingPeriodHolder.startPositionUs
                 : loadingPeriodHolder.mediaPeriod.getBufferedPositionUs();
@@ -863,9 +865,11 @@ final class ExoPlayerImplInternal implements Handler.Callback,
             if (loadingPeriodHolder.isLast) {
                 return true;
             }
-            loadingPeriodBufferedPositionUs = timeline.getPeriod(loadingPeriodHolder.index, period)
-                    .getDurationUs();
+            loadingPeriodBufferedPositionUs = timeline.getPeriod(loadingPeriodHolder.index, period).getDurationUs();
         }
+
+        // rendererPositionUs 当前播放的位置
+        // 缓存中有多少数据，决定了什么时候可以开始播放
         return loadControl.shouldStartPlayback(
                 loadingPeriodBufferedPositionUs - loadingPeriodHolder.toPeriodTime(rendererPositionUs),
                 rebuffering);
@@ -1151,6 +1155,7 @@ final class ExoPlayerImplInternal implements Handler.Callback,
         return Pair.create(periodIndex, periodPositionUs);
     }
 
+    // 再更新状态时会调用: maybeContinueLoading
     private void updatePeriods() throws ExoPlaybackException, IOException {
         if (timeline == null) {
             // We're waiting to get information about periods.
