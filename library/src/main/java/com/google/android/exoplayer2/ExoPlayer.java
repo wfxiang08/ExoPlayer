@@ -137,6 +137,7 @@ public interface ExoPlayer {
     void onTracksChanged(TrackGroupArray trackGroups, TrackSelectionArray trackSelections);
 
     /**
+     * 这个很重要，可以和Cache框架一起来做
      * Called when the player starts or stops loading the source.
      *
      * @param isLoading Whether the source is currently being loaded.
@@ -158,6 +159,7 @@ public interface ExoPlayer {
      * immediately after this method is called. The player instance can still be used, and
      * {@link #release()} must still be called on the player should it no longer be required.
      *
+     *  这个需要加强监控
      * @param error The error.
      */
     void onPlayerError(ExoPlaybackException error);
