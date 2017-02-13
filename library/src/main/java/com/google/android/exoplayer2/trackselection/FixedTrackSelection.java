@@ -24,77 +24,77 @@ import com.google.android.exoplayer2.util.Assertions;
  */
 public final class FixedTrackSelection extends BaseTrackSelection {
 
-  /**
-   * Factory for {@link FixedTrackSelection} instances.
-   */
-  public static final class Factory implements TrackSelection.Factory {
+    /**
+     * Factory for {@link FixedTrackSelection} instances.
+     */
+    public static final class Factory implements TrackSelection.Factory {
+
+        private final int reason;
+        private final Object data;
+
+        public Factory() {
+            this.reason = C.SELECTION_REASON_UNKNOWN;
+            this.data = null;
+        }
+
+        /**
+         * @param reason A reason for the track selection.
+         * @param data   Optional data associated with the track selection.
+         */
+        public Factory(int reason, Object data) {
+            this.reason = reason;
+            this.data = data;
+        }
+
+        @Override
+        public FixedTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
+            Assertions.checkArgument(tracks.length == 1);
+            return new FixedTrackSelection(group, tracks[0], reason, data);
+        }
+
+    }
 
     private final int reason;
     private final Object data;
 
-    public Factory() {
-      this.reason = C.SELECTION_REASON_UNKNOWN;
-      this.data = null;
+    /**
+     * @param group The {@link TrackGroup}. Must not be null.
+     * @param track The index of the selected track within the {@link TrackGroup}.
+     */
+    public FixedTrackSelection(TrackGroup group, int track) {
+        this(group, track, C.SELECTION_REASON_UNKNOWN, null);
     }
 
     /**
+     * @param group  The {@link TrackGroup}. Must not be null.
+     * @param track  The index of the selected track within the {@link TrackGroup}.
      * @param reason A reason for the track selection.
-     * @param data Optional data associated with the track selection.
+     * @param data   Optional data associated with the track selection.
      */
-    public Factory(int reason, Object data) {
-      this.reason = reason;
-      this.data = data;
+    public FixedTrackSelection(TrackGroup group, int track, int reason, Object data) {
+        super(group, track);
+        this.reason = reason;
+        this.data = data;
     }
 
     @Override
-    public FixedTrackSelection createTrackSelection(TrackGroup group, int... tracks) {
-      Assertions.checkArgument(tracks.length == 1);
-      return new FixedTrackSelection(group, tracks[0], reason, data);
+    public void updateSelectedTrack(long bufferedDurationUs) {
+        // Do nothing.
     }
 
-  }
+    @Override
+    public int getSelectedIndex() {
+        return 0;
+    }
 
-  private final int reason;
-  private final Object data;
+    @Override
+    public int getSelectionReason() {
+        return reason;
+    }
 
-  /**
-   * @param group The {@link TrackGroup}. Must not be null.
-   * @param track The index of the selected track within the {@link TrackGroup}.
-   */
-  public FixedTrackSelection(TrackGroup group, int track) {
-    this(group, track, C.SELECTION_REASON_UNKNOWN, null);
-  }
-
-  /**
-   * @param group The {@link TrackGroup}. Must not be null.
-   * @param track The index of the selected track within the {@link TrackGroup}.
-   * @param reason A reason for the track selection.
-   * @param data Optional data associated with the track selection.
-   */
-  public FixedTrackSelection(TrackGroup group, int track, int reason, Object data) {
-    super(group, track);
-    this.reason = reason;
-    this.data = data;
-  }
-
-  @Override
-  public void updateSelectedTrack(long bufferedDurationUs) {
-    // Do nothing.
-  }
-
-  @Override
-  public int getSelectedIndex() {
-    return 0;
-  }
-
-  @Override
-  public int getSelectionReason() {
-    return reason;
-  }
-
-  @Override
-  public Object getSelectionData() {
-    return data;
-  }
+    @Override
+    public Object getSelectionData() {
+        return data;
+    }
 
 }
