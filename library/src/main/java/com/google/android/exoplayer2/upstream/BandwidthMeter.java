@@ -20,35 +20,35 @@ package com.google.android.exoplayer2.upstream;
  */
 public interface BandwidthMeter {
 
-  /**
-   * A listener of {@link BandwidthMeter} events.
-   */
-  interface EventListener {
+    /**
+     * A listener of {@link BandwidthMeter} events.
+     */
+    interface EventListener {
+
+        /**
+         * Called periodically to indicate that bytes have been transferred.
+         * <p>
+         * Note: The estimated bitrate is typically derived from more information than just
+         * {@code bytes} and {@code elapsedMs}.
+         *
+         * @param elapsedMs The time taken to transfer the bytes, in milliseconds.
+         * @param bytes     The number of bytes transferred.
+         * @param bitrate   The estimated bitrate in bits/sec, or {@link #NO_ESTIMATE} if an estimate is
+         *                  not available.
+         */
+        void onBandwidthSample(int elapsedMs, long bytes, long bitrate);
+
+    }
 
     /**
-     * Called periodically to indicate that bytes have been transferred.
-     * <p>
-     * Note: The estimated bitrate is typically derived from more information than just
-     * {@code bytes} and {@code elapsedMs}.
-     *
-     * @param elapsedMs The time taken to transfer the bytes, in milliseconds.
-     * @param bytes The number of bytes transferred.
-     * @param bitrate The estimated bitrate in bits/sec, or {@link #NO_ESTIMATE} if an estimate is
-     *     not available.
+     * Indicates no bandwidth estimate is available.
      */
-    void onBandwidthSample(int elapsedMs, long bytes, long bitrate);
+    long NO_ESTIMATE = -1;
 
-  }
-
-  /**
-   * Indicates no bandwidth estimate is available.
-   */
-  long NO_ESTIMATE = -1;
-
-  /**
-   * Returns the estimated bandwidth in bits/sec, or {@link #NO_ESTIMATE} if an estimate is not
-   * available.
-   */
-  long getBitrateEstimate();
+    /**
+     * Returns the estimated bandwidth in bits/sec, or {@link #NO_ESTIMATE} if an estimate is not
+     * available.
+     */
+    long getBitrateEstimate();
 
 }
