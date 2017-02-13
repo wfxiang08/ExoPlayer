@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.source.hls.playlist;
 
 import android.support.annotation.IntDef;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
@@ -24,26 +25,26 @@ import java.lang.annotation.RetentionPolicy;
  */
 public abstract class HlsPlaylist {
 
-  /**
-   * The type of playlist.
-   */
-  @Retention(RetentionPolicy.SOURCE)
-  @IntDef({TYPE_MASTER, TYPE_MEDIA})
-  public @interface Type {}
+    // The type of playlist.
+    // 定义Annotation, 在Coding阶段有效，保证输入的参数必须满足指定的条件
+    @Retention(RetentionPolicy.SOURCE)
+    @IntDef({TYPE_MASTER, TYPE_MEDIA})
+    public @interface Type {
+    }
 
-  public static final int TYPE_MASTER = 0;
-  public static final int TYPE_MEDIA = 1;
+    public static final int TYPE_MASTER = 0;
+    public static final int TYPE_MEDIA = 1;
 
-  // URL
-  public final String baseUri;
+    // URL
+    public final String baseUri;
 
-  // 类型
-  @Type
-  public final int type;
+    // 类型
+    @Type
+    public final int type;
 
-  protected HlsPlaylist(String baseUri, @Type int type) {
-    this.baseUri = baseUri;
-    this.type = type;
-  }
+    protected HlsPlaylist(String baseUri, @Type int type) {
+        this.baseUri = baseUri;
+        this.type = type;
+    }
 
 }

@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.source;
 
 import com.google.android.exoplayer2.C;
+
 import java.util.Arrays;
 
 /**
@@ -23,72 +24,72 @@ import java.util.Arrays;
  */
 public final class TrackGroupArray {
 
-  /**
-   * The empty array.
-   */
-  public static final TrackGroupArray EMPTY = new TrackGroupArray();
+    /**
+     * The empty array.
+     */
+    public static final TrackGroupArray EMPTY = new TrackGroupArray();
 
-  /**
-   * The number of groups in the array. Greater than or equal to zero.
-   */
-  public final int length;
+    /**
+     * The number of groups in the array. Greater than or equal to zero.
+     */
+    public final int length;
 
-  private final TrackGroup[] trackGroups;
+    private final TrackGroup[] trackGroups;
 
-  // Lazily initialized hashcode.
-  private int hashCode;
+    // Lazily initialized hashcode.
+    private int hashCode;
 
-  /**
-   * @param trackGroups The groups. Must not be null or contain null elements, but may be empty.
-   */
-  public TrackGroupArray(TrackGroup... trackGroups) {
-    this.trackGroups = trackGroups;
-    this.length = trackGroups.length;
-  }
-
-  /**
-   * Returns the group at a given index.
-   *
-   * @param index The index of the group.
-   * @return The group.
-   */
-  public TrackGroup get(int index) {
-    return trackGroups[index];
-  }
-
-  /**
-   * Returns the index of a group within the array.
-   *
-   * @param group The group.
-   * @return The index of the group, or {@link C#INDEX_UNSET} if no such group exists.
-   */
-  public int indexOf(TrackGroup group) {
-    for (int i = 0; i < length; i++) {
-      if (trackGroups[i] == group) {
-        return i;
-      }
+    /**
+     * @param trackGroups The groups. Must not be null or contain null elements, but may be empty.
+     */
+    public TrackGroupArray(TrackGroup... trackGroups) {
+        this.trackGroups = trackGroups;
+        this.length = trackGroups.length;
     }
-    return C.INDEX_UNSET;
-  }
 
-  @Override
-  public int hashCode() {
-    if (hashCode == 0) {
-      hashCode = Arrays.hashCode(trackGroups);
+    /**
+     * Returns the group at a given index.
+     *
+     * @param index The index of the group.
+     * @return The group.
+     */
+    public TrackGroup get(int index) {
+        return trackGroups[index];
     }
-    return hashCode;
-  }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
+    /**
+     * Returns the index of a group within the array.
+     *
+     * @param group The group.
+     * @return The index of the group, or {@link C#INDEX_UNSET} if no such group exists.
+     */
+    public int indexOf(TrackGroup group) {
+        for (int i = 0; i < length; i++) {
+            if (trackGroups[i] == group) {
+                return i;
+            }
+        }
+        return C.INDEX_UNSET;
     }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
+
+    @Override
+    public int hashCode() {
+        if (hashCode == 0) {
+            hashCode = Arrays.hashCode(trackGroups);
+        }
+        return hashCode;
     }
-    TrackGroupArray other = (TrackGroupArray) obj;
-    return length == other.length && Arrays.equals(trackGroups, other.trackGroups);
-  }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        TrackGroupArray other = (TrackGroupArray) obj;
+        return length == other.length && Arrays.equals(trackGroups, other.trackGroups);
+    }
 
 }

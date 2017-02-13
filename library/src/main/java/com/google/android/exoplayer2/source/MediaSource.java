@@ -18,6 +18,7 @@ package com.google.android.exoplayer2.source;
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.upstream.Allocator;
+
 import java.io.IOException;
 
 /**
@@ -25,63 +26,63 @@ import java.io.IOException;
  */
 public interface MediaSource {
 
-  /**
-   * Listener for source events.
-   */
-  interface Listener {
+    /**
+     * Listener for source events.
+     */
+    interface Listener {
+
+        /**
+         * Called when manifest and/or timeline has been refreshed.
+         *
+         * @param timeline The source's timeline.
+         * @param manifest The loaded manifest.
+         */
+        void onSourceInfoRefreshed(Timeline timeline, Object manifest);
+
+    }
 
     /**
-     * Called when manifest and/or timeline has been refreshed.
+     * Starts preparation of the source.
      *
-     * @param timeline The source's timeline.
-     * @param manifest The loaded manifest.
+     * @param player           The player for which this source is being prepared.
+     * @param isTopLevelSource Whether this source has been passed directly to
+     *                         {@link ExoPlayer#prepare(MediaSource)} or
+     *                         {@link ExoPlayer#prepare(MediaSource, boolean, boolean)}. If {@code false}, this source is
+     *                         being prepared by another source (e.g. {@link ConcatenatingMediaSource}) for composition.
+     * @param listener         The listener for source events.
      */
-    void onSourceInfoRefreshed(Timeline timeline, Object manifest);
+    void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener);
 
-  }
+    /**
+     * Throws any pending error encountered while loading or refreshing source information.
+     */
+    void maybeThrowSourceInfoRefreshError() throws IOException;
 
-  /**
-   * Starts preparation of the source.
-   *
-   * @param player The player for which this source is being prepared.
-   * @param isTopLevelSource Whether this source has been passed directly to
-   *     {@link ExoPlayer#prepare(MediaSource)} or
-   *     {@link ExoPlayer#prepare(MediaSource, boolean, boolean)}. If {@code false}, this source is
-   *     being prepared by another source (e.g. {@link ConcatenatingMediaSource}) for composition.
-   * @param listener The listener for source events.
-   */
-  void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener);
+    /**
+     * Returns a new {@link MediaPeriod} corresponding to the period at the specified {@code index}.
+     * This method may be called multiple times with the same index without an intervening call to
+     * {@link #releasePeriod(MediaPeriod)}.
+     *
+     * @param index      The index of the period.
+     * @param allocator  An {@link Allocator} from which to obtain media buffer allocations.
+     * @param positionUs The player's current playback position.
+     * @return A new {@link MediaPeriod}.
+     */
+    MediaPeriod createPeriod(int index, Allocator allocator, long positionUs);
 
-  /**
-   * Throws any pending error encountered while loading or refreshing source information.
-   */
-  void maybeThrowSourceInfoRefreshError() throws IOException;
+    /**
+     * Releases the period.
+     *
+     * @param mediaPeriod The period to release.
+     */
+    void releasePeriod(MediaPeriod mediaPeriod);
 
-  /**
-   * Returns a new {@link MediaPeriod} corresponding to the period at the specified {@code index}.
-   * This method may be called multiple times with the same index without an intervening call to
-   * {@link #releasePeriod(MediaPeriod)}.
-   *
-   * @param index The index of the period.
-   * @param allocator An {@link Allocator} from which to obtain media buffer allocations.
-   * @param positionUs The player's current playback position.
-   * @return A new {@link MediaPeriod}.
-   */
-  MediaPeriod createPeriod(int index, Allocator allocator, long positionUs);
-
-  /**
-   * Releases the period.
-   *
-   * @param mediaPeriod The period to release.
-   */
-  void releasePeriod(MediaPeriod mediaPeriod);
-
-  /**
-   * Releases the source.
-   * <p>
-   * This method should be called when the source is no longer required. It may be called in any
-   * state.
-   */
-  void releaseSource();
+    /**
+     * Releases the source.
+     * <p>
+     * This method should be called when the source is no longer required. It may be called in any
+     * state.
+     */
+    void releaseSource();
 
 }

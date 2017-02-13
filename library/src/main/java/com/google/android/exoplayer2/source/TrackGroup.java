@@ -18,10 +18,12 @@ package com.google.android.exoplayer2.source;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.util.Assertions;
+
 import java.util.Arrays;
 
 // TODO: Add an allowMultipleStreams boolean to indicate where the one stream per group restriction
 // does not apply.
+
 /**
  * Defines a group of tracks exposed by a {@link MediaPeriod}.
  * <p>
@@ -32,70 +34,70 @@ import java.util.Arrays;
 // 内部管理一系列的: Format
 public final class TrackGroup {
 
-  /**
-   * The number of tracks in the group.
-   */
-  public final int length;
+    /**
+     * The number of tracks in the group.
+     */
+    public final int length;
 
-  private final Format[] formats;
+    private final Format[] formats;
 
-  // Lazily initialized hashcode.
-  private int hashCode;
+    // Lazily initialized hashcode.
+    private int hashCode;
 
-  /**
-   * @param formats The track formats. Must not be null or contain null elements.
-   */
-  public TrackGroup(Format... formats) {
-    Assertions.checkState(formats.length > 0);
-    this.formats = formats;
-    this.length = formats.length;
-  }
-
-  /**
-   * Returns the format of the track at a given index.
-   *
-   * @param index The index of the track.
-   * @return The track's format.
-   */
-  public Format getFormat(int index) {
-    return formats[index];
-  }
-
-  /**
-   * Returns the index of the track with the given format in the group.
-   *
-   * @param format The format.
-   * @return The index of the track, or {@link C#INDEX_UNSET} if no such track exists.
-   */
-  public int indexOf(Format format) {
-    for (int i = 0; i < formats.length; i++) {
-      if (format == formats[i]) {
-        return i;
-      }
+    /**
+     * @param formats The track formats. Must not be null or contain null elements.
+     */
+    public TrackGroup(Format... formats) {
+        Assertions.checkState(formats.length > 0);
+        this.formats = formats;
+        this.length = formats.length;
     }
-    return C.INDEX_UNSET;
-  }
 
-  @Override
-  public int hashCode() {
-    if (hashCode == 0) {
-      int result = 17;
-      result = 31 * result + Arrays.hashCode(formats);
-      hashCode = result;
+    /**
+     * Returns the format of the track at a given index.
+     *
+     * @param index The index of the track.
+     * @return The track's format.
+     */
+    public Format getFormat(int index) {
+        return formats[index];
     }
-    return hashCode;
-  }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) {
-      return true;
+    /**
+     * Returns the index of the track with the given format in the group.
+     *
+     * @param format The format.
+     * @return The index of the track, or {@link C#INDEX_UNSET} if no such track exists.
+     */
+    public int indexOf(Format format) {
+        for (int i = 0; i < formats.length; i++) {
+            if (format == formats[i]) {
+                return i;
+            }
+        }
+        return C.INDEX_UNSET;
     }
-    if (obj == null || getClass() != obj.getClass()) {
-      return false;
+
+    @Override
+    public int hashCode() {
+        if (hashCode == 0) {
+            int result = 17;
+            result = 31 * result + Arrays.hashCode(formats);
+            hashCode = result;
+        }
+        return hashCode;
     }
-    TrackGroup other = (TrackGroup) obj;
-    return length == other.length && Arrays.equals(formats, other.formats);
-  }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        TrackGroup other = (TrackGroup) obj;
+        return length == other.length && Arrays.equals(formats, other.formats);
+    }
 
 }

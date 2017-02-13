@@ -22,100 +22,102 @@ import com.google.android.exoplayer2.util.Assertions;
 /**
  * A {@link Timeline} consisting of a single period and static window.
  * 只包含1个window和1个period的Timeline
+ * <p>
+ * 在点播场景中基本上都是这个实现
  */
 public final class SinglePeriodTimeline extends Timeline {
 
-  private static final Object ID = new Object();
+    private static final Object ID = new Object();
 
-  private final long periodDurationUs;
-  private final long windowDurationUs;
-  private final long windowPositionInPeriodUs;
-  private final long windowDefaultStartPositionUs;
-  private final boolean isSeekable;
-  private final boolean isDynamic;
+    private final long periodDurationUs;
+    private final long windowDurationUs;
+    private final long windowPositionInPeriodUs;
+    private final long windowDefaultStartPositionUs;
+    private final boolean isSeekable;
+    private final boolean isDynamic;
 
-  /**
-   * Creates a timeline of one period of known duration, and a static window starting at zero and
-   * extending to that duration.
-   *
-   * @param durationUs The duration of the period, in microseconds.
-   * @param isSeekable Whether seeking is supported within the period.
-   */
-  public SinglePeriodTimeline(long durationUs, boolean isSeekable) {
-    this(durationUs, durationUs, 0, 0, isSeekable, false);
-  }
-
-  /**
-   * Creates a timeline with one period of known duration, and a window of known duration starting
-   * at a specified position in the period.
-   *
-   * @param periodDurationUs The duration of the period in microseconds.
-   * @param windowDurationUs The duration of the window in microseconds.
-   * @param windowPositionInPeriodUs The position of the start of the window in the period, in
-   *     microseconds.
-   * @param windowDefaultStartPositionUs The default position relative to the start of the window at
-   *     which to begin playback, in microseconds.
-   * @param isSeekable Whether seeking is supported within the window.
-   * @param isDynamic Whether the window may change when the timeline is updated.
-   */
-  public SinglePeriodTimeline(long periodDurationUs, long windowDurationUs,
-      long windowPositionInPeriodUs, long windowDefaultStartPositionUs, boolean isSeekable,
-      boolean isDynamic) {
-    this.periodDurationUs = periodDurationUs;
-    this.windowDurationUs = windowDurationUs;
-    this.windowPositionInPeriodUs = windowPositionInPeriodUs;
-    this.windowDefaultStartPositionUs = windowDefaultStartPositionUs;
-    this.isSeekable = isSeekable;
-    this.isDynamic = isDynamic;
-  }
-
-  @Override
-  public int getWindowCount() {
-    return 1;
-  }
-
-  @Override
-  public Window getWindow(int windowIndex, Window window, boolean setIds, long defaultPositionProjectionUs) {
-    Assertions.checkIndex(windowIndex, 0, 1);
-
-    Object id = setIds ? ID : null;
-    long windowDefaultStartPositionUs = this.windowDefaultStartPositionUs;
-
-    //
-    // 正常情况下 isDynamic  == false
-    //
-    if (isDynamic) {
-      windowDefaultStartPositionUs += defaultPositionProjectionUs;
-      if (windowDefaultStartPositionUs > windowDurationUs) {
-        // The projection takes us beyond the end of the live window.
-        windowDefaultStartPositionUs = C.TIME_UNSET;
-      }
+    /**
+     * Creates a timeline of one period of known duration, and a static window starting at zero and
+     * extending to that duration.
+     *
+     * @param durationUs The duration of the period, in microseconds.
+     * @param isSeekable Whether seeking is supported within the period.
+     */
+    public SinglePeriodTimeline(long durationUs, boolean isSeekable) {
+        this(durationUs, durationUs, 0, 0, isSeekable, false);
     }
 
-    // 修改window的信息
-    // Object id, long presentationStartTimeMs, long windowStartTimeMs,
-    // boolean isSeekable, boolean isDynamic, long defaultPositionUs, long durationUs,
-    // int firstPeriodIndex, int lastPeriodIndex, long positionInFirstPeriodUs
-    return window.set(id, C.TIME_UNSET, C.TIME_UNSET,
-            isSeekable, isDynamic, windowDefaultStartPositionUs, windowDurationUs,
-            0, 0, windowPositionInPeriodUs);
-  }
+    /**
+     * Creates a timeline with one period of known duration, and a window of known duration starting
+     * at a specified position in the period.
+     *
+     * @param periodDurationUs             The duration of the period in microseconds.
+     * @param windowDurationUs             The duration of the window in microseconds.
+     * @param windowPositionInPeriodUs     The position of the start of the window in the period, in
+     *                                     microseconds.
+     * @param windowDefaultStartPositionUs The default position relative to the start of the window at
+     *                                     which to begin playback, in microseconds.
+     * @param isSeekable                   Whether seeking is supported within the window.
+     * @param isDynamic                    Whether the window may change when the timeline is updated.
+     */
+    public SinglePeriodTimeline(long periodDurationUs, long windowDurationUs,
+                                long windowPositionInPeriodUs, long windowDefaultStartPositionUs, boolean isSeekable,
+                                boolean isDynamic) {
+        this.periodDurationUs = periodDurationUs;
+        this.windowDurationUs = windowDurationUs;
+        this.windowPositionInPeriodUs = windowPositionInPeriodUs;
+        this.windowDefaultStartPositionUs = windowDefaultStartPositionUs;
+        this.isSeekable = isSeekable;
+        this.isDynamic = isDynamic;
+    }
 
-  @Override
-  public int getPeriodCount() {
-    return 1;
-  }
+    @Override
+    public int getWindowCount() {
+        return 1;
+    }
 
-  @Override
-  public Period getPeriod(int periodIndex, Period period, boolean setIds) {
-    Assertions.checkIndex(periodIndex, 0, 1);
-    Object id = setIds ? ID : null;
-    return period.set(id, id, 0, periodDurationUs, -windowPositionInPeriodUs);
-  }
+    @Override
+    public Window getWindow(int windowIndex, Window window, boolean setIds, long defaultPositionProjectionUs) {
+        Assertions.checkIndex(windowIndex, 0, 1);
 
-  @Override
-  public int getIndexOfPeriod(Object uid) {
-    return ID.equals(uid) ? 0 : C.INDEX_UNSET;
-  }
+        Object id = setIds ? ID : null;
+        long windowDefaultStartPositionUs = this.windowDefaultStartPositionUs;
+
+        //
+        // 正常情况下 isDynamic  == false
+        //
+        if (isDynamic) {
+            windowDefaultStartPositionUs += defaultPositionProjectionUs;
+            if (windowDefaultStartPositionUs > windowDurationUs) {
+                // The projection takes us beyond the end of the live window.
+                windowDefaultStartPositionUs = C.TIME_UNSET;
+            }
+        }
+
+        // 修改window的信息
+        // Object id, long presentationStartTimeMs, long windowStartTimeMs,
+        // boolean isSeekable, boolean isDynamic, long defaultPositionUs, long durationUs,
+        // int firstPeriodIndex, int lastPeriodIndex, long positionInFirstPeriodUs
+        return window.set(id, C.TIME_UNSET, C.TIME_UNSET,
+                isSeekable, isDynamic, windowDefaultStartPositionUs, windowDurationUs,
+                0, 0, windowPositionInPeriodUs);
+    }
+
+    @Override
+    public int getPeriodCount() {
+        return 1;
+    }
+
+    @Override
+    public Period getPeriod(int periodIndex, Period period, boolean setIds) {
+        Assertions.checkIndex(periodIndex, 0, 1);
+        Object id = setIds ? ID : null;
+        return period.set(id, id, 0, periodDurationUs, -windowPositionInPeriodUs);
+    }
+
+    @Override
+    public int getIndexOfPeriod(Object uid) {
+        return ID.equals(uid) ? 0 : C.INDEX_UNSET;
+    }
 
 }

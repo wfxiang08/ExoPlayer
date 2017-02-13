@@ -18,6 +18,7 @@ package com.google.android.exoplayer2.source;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
+
 import java.io.IOException;
 
 /**
@@ -25,40 +26,40 @@ import java.io.IOException;
  */
 public interface SampleStream {
 
-  /**
-   * Returns whether data is available to be read.
-   * <p>
-   * Note: If the stream has ended then a buffer with the end of stream flag can always be read from
-   * {@link #readData(FormatHolder, DecoderInputBuffer)}. Hence an ended stream is always ready.
-   *
-   * @return Whether data is available to be read.
-   */
-  boolean isReady();
+    /**
+     * Returns whether data is available to be read.
+     * <p>
+     * Note: If the stream has ended then a buffer with the end of stream flag can always be read from
+     * {@link #readData(FormatHolder, DecoderInputBuffer)}. Hence an ended stream is always ready.
+     *
+     * @return Whether data is available to be read.
+     */
+    boolean isReady();
 
-  /**
-   * Throws an error that's preventing data from being read. Does nothing if no such error exists.
-   *
-   * @throws IOException The underlying error.
-   */
-  void maybeThrowError() throws IOException;
+    /**
+     * Throws an error that's preventing data from being read. Does nothing if no such error exists.
+     *
+     * @throws IOException The underlying error.
+     */
+    void maybeThrowError() throws IOException;
 
-  /**
-   * Attempts to read from the stream.
-   *
-   * @param formatHolder A {@link FormatHolder} to populate in the case of reading a format.
-   * @param buffer A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
-   *     end of the stream. If the end of the stream has been reached, the
-   *     {@link C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
-   * @return The result, which can be {@link C#RESULT_NOTHING_READ}, {@link C#RESULT_FORMAT_READ} or
-   *     {@link C#RESULT_BUFFER_READ}.
-   */
-  int readData(FormatHolder formatHolder, DecoderInputBuffer buffer);
+    /**
+     * Attempts to read from the stream.
+     *
+     * @param formatHolder A {@link FormatHolder} to populate in the case of reading a format.
+     * @param buffer       A {@link DecoderInputBuffer} to populate in the case of reading a sample or the
+     *                     end of the stream. If the end of the stream has been reached, the
+     *                     {@link C#BUFFER_FLAG_END_OF_STREAM} flag will be set on the buffer.
+     * @return The result, which can be {@link C#RESULT_NOTHING_READ}, {@link C#RESULT_FORMAT_READ} or
+     * {@link C#RESULT_BUFFER_READ}.
+     */
+    int readData(FormatHolder formatHolder, DecoderInputBuffer buffer);
 
-  /**
-   * Attempts to skip to the keyframe before the specified time.
-   *
-   * @param timeUs The specified time.
-   */
-  void skipToKeyframeBefore(long timeUs);
+    /**
+     * Attempts to skip to the keyframe before the specified time.
+     *
+     * @param timeUs The specified time.
+     */
+    void skipToKeyframeBefore(long timeUs);
 
 }

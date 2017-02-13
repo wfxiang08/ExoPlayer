@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.source.hls;
 
 import android.util.SparseArray;
+
 import com.google.android.exoplayer2.extractor.TimestampAdjuster;
 
 /**
@@ -23,36 +24,36 @@ import com.google.android.exoplayer2.extractor.TimestampAdjuster;
  */
 public final class TimestampAdjusterProvider {
 
-  // TODO: Prevent this array from growing indefinitely large by removing adjusters that are no
-  // longer required.
-  private final SparseArray<TimestampAdjuster> timestampAdjusters;
+    // TODO: Prevent this array from growing indefinitely large by removing adjusters that are no
+    // longer required.
+    private final SparseArray<TimestampAdjuster> timestampAdjusters;
 
-  public TimestampAdjusterProvider() {
-    timestampAdjusters = new SparseArray<>();
-  }
-
-  /**
-   * Returns a {@link TimestampAdjuster} suitable for adjusting the pts timestamps contained in
-   * a chunk with a given discontinuity sequence.
-   *
-   * @param discontinuitySequence The chunk's discontinuity sequence.
-   * @param startTimeUs The chunk's start time.
-   * @return A {@link TimestampAdjuster}.
-   */
-  public TimestampAdjuster getAdjuster(int discontinuitySequence, long startTimeUs) {
-    TimestampAdjuster adjuster = timestampAdjusters.get(discontinuitySequence);
-    if (adjuster == null) {
-      adjuster = new TimestampAdjuster(startTimeUs);
-      timestampAdjusters.put(discontinuitySequence, adjuster);
+    public TimestampAdjusterProvider() {
+        timestampAdjusters = new SparseArray<>();
     }
-    return adjuster;
-  }
 
-  /**
-   * Resets the provider.
-   */
-  public void reset() {
-    timestampAdjusters.clear();
-  }
+    /**
+     * Returns a {@link TimestampAdjuster} suitable for adjusting the pts timestamps contained in
+     * a chunk with a given discontinuity sequence.
+     *
+     * @param discontinuitySequence The chunk's discontinuity sequence.
+     * @param startTimeUs           The chunk's start time.
+     * @return A {@link TimestampAdjuster}.
+     */
+    public TimestampAdjuster getAdjuster(int discontinuitySequence, long startTimeUs) {
+        TimestampAdjuster adjuster = timestampAdjusters.get(discontinuitySequence);
+        if (adjuster == null) {
+            adjuster = new TimestampAdjuster(startTimeUs);
+            timestampAdjusters.put(discontinuitySequence, adjuster);
+        }
+        return adjuster;
+    }
+
+    /**
+     * Resets the provider.
+     */
+    public void reset() {
+        timestampAdjusters.clear();
+    }
 
 }

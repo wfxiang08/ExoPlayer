@@ -17,12 +17,14 @@ package com.google.android.exoplayer2.source;
 
 import android.net.Uri;
 import android.os.Handler;
+
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.upstream.Allocator;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.util.Assertions;
+
 import java.io.IOException;
 
 /**
@@ -30,85 +32,85 @@ import java.io.IOException;
  */
 public final class SingleSampleMediaSource implements MediaSource {
 
-  /**
-   * Listener of {@link SingleSampleMediaSource} events.
-   */
-  public interface EventListener {
+    /**
+     * Listener of {@link SingleSampleMediaSource} events.
+     */
+    public interface EventListener {
+
+        /**
+         * Called when an error occurs loading media data.
+         *
+         * @param sourceId The id of the reporting {@link SingleSampleMediaSource}.
+         * @param e        The cause of the failure.
+         */
+        void onLoadError(int sourceId, IOException e);
+
+    }
 
     /**
-     * Called when an error occurs loading media data.
-     *
-     * @param sourceId The id of the reporting {@link SingleSampleMediaSource}.
-     * @param e The cause of the failure.
+     * The default minimum number of times to retry loading data prior to failing.
      */
-    void onLoadError(int sourceId, IOException e);
+    public static final int DEFAULT_MIN_LOADABLE_RETRY_COUNT = 3;
 
-  }
+    private final Uri uri;
+    private final DataSource.Factory dataSourceFactory;
+    private final Format format;
+    private final int minLoadableRetryCount;
+    private final Handler eventHandler;
+    private final EventListener eventListener;
+    private final int eventSourceId;
+    private final Timeline timeline;
 
-  /**
-   * The default minimum number of times to retry loading data prior to failing.
-   */
-  public static final int DEFAULT_MIN_LOADABLE_RETRY_COUNT = 3;
+    public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
+                                   long durationUs) {
+        this(uri, dataSourceFactory, format, durationUs, DEFAULT_MIN_LOADABLE_RETRY_COUNT);
+    }
 
-  private final Uri uri;
-  private final DataSource.Factory dataSourceFactory;
-  private final Format format;
-  private final int minLoadableRetryCount;
-  private final Handler eventHandler;
-  private final EventListener eventListener;
-  private final int eventSourceId;
-  private final Timeline timeline;
+    public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
+                                   long durationUs, int minLoadableRetryCount) {
+        this(uri, dataSourceFactory, format, durationUs, minLoadableRetryCount, null, null, 0);
+    }
 
-  public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
-      long durationUs) {
-    this(uri, dataSourceFactory, format, durationUs, DEFAULT_MIN_LOADABLE_RETRY_COUNT);
-  }
+    public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
+                                   long durationUs, int minLoadableRetryCount, Handler eventHandler, EventListener eventListener,
+                                   int eventSourceId) {
+        this.uri = uri;
+        this.dataSourceFactory = dataSourceFactory;
+        this.format = format;
+        this.minLoadableRetryCount = minLoadableRetryCount;
+        this.eventHandler = eventHandler;
+        this.eventListener = eventListener;
+        this.eventSourceId = eventSourceId;
+        timeline = new SinglePeriodTimeline(durationUs, true);
+    }
 
-  public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
-      long durationUs, int minLoadableRetryCount) {
-    this(uri, dataSourceFactory, format, durationUs, minLoadableRetryCount, null, null, 0);
-  }
+    // MediaSource implementation.
 
-  public SingleSampleMediaSource(Uri uri, DataSource.Factory dataSourceFactory, Format format,
-      long durationUs, int minLoadableRetryCount, Handler eventHandler, EventListener eventListener,
-      int eventSourceId) {
-    this.uri = uri;
-    this.dataSourceFactory = dataSourceFactory;
-    this.format = format;
-    this.minLoadableRetryCount = minLoadableRetryCount;
-    this.eventHandler = eventHandler;
-    this.eventListener = eventListener;
-    this.eventSourceId = eventSourceId;
-    timeline = new SinglePeriodTimeline(durationUs, true);
-  }
+    @Override
+    public void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener) {
+        listener.onSourceInfoRefreshed(timeline, null);
+    }
 
-  // MediaSource implementation.
+    @Override
+    public void maybeThrowSourceInfoRefreshError() throws IOException {
+        // Do nothing.
+    }
 
-  @Override
-  public void prepareSource(ExoPlayer player, boolean isTopLevelSource, Listener listener) {
-    listener.onSourceInfoRefreshed(timeline, null);
-  }
+    @Override
+    public MediaPeriod createPeriod(int index, Allocator allocator, long positionUs) {
+        Assertions.checkArgument(index == 0);
+        return new SingleSampleMediaPeriod(uri, dataSourceFactory, format, minLoadableRetryCount,
+                eventHandler, eventListener, eventSourceId);
+    }
 
-  @Override
-  public void maybeThrowSourceInfoRefreshError() throws IOException {
-    // Do nothing.
-  }
+    @Override
+    public void releasePeriod(MediaPeriod mediaPeriod) {
+        ((SingleSampleMediaPeriod) mediaPeriod).release();
+    }
 
-  @Override
-  public MediaPeriod createPeriod(int index, Allocator allocator, long positionUs) {
-    Assertions.checkArgument(index == 0);
-    return new SingleSampleMediaPeriod(uri, dataSourceFactory, format, minLoadableRetryCount,
-        eventHandler, eventListener, eventSourceId);
-  }
-
-  @Override
-  public void releasePeriod(MediaPeriod mediaPeriod) {
-    ((SingleSampleMediaPeriod) mediaPeriod).release();
-  }
-
-  @Override
-  public void releaseSource() {
-    // Do nothing.
-  }
+    @Override
+    public void releaseSource() {
+        // Do nothing.
+    }
 
 }

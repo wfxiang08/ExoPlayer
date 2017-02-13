@@ -22,31 +22,31 @@ import com.google.android.exoplayer2.C;
  */
 public interface SequenceableLoader {
 
-  /**
-   * A callback to be notified of {@link SequenceableLoader} events.
-   */
-  interface Callback<T extends SequenceableLoader> {
+    /**
+     * A callback to be notified of {@link SequenceableLoader} events.
+     */
+    interface Callback<T extends SequenceableLoader> {
+
+        /**
+         * Called by the loader to indicate that it wishes for its {@link #continueLoading(long)} method
+         * to be called when it can continue to load data. Called on the playback thread.
+         */
+        void onContinueLoadingRequested(T source);
+
+    }
 
     /**
-     * Called by the loader to indicate that it wishes for its {@link #continueLoading(long)} method
-     * to be called when it can continue to load data. Called on the playback thread.
+     * Returns the next load time, or {@link C#TIME_END_OF_SOURCE} if loading has finished.
      */
-    void onContinueLoadingRequested(T source);
+    long getNextLoadPositionUs();
 
-  }
-
-  /**
-   * Returns the next load time, or {@link C#TIME_END_OF_SOURCE} if loading has finished.
-   */
-  long getNextLoadPositionUs();
-
-  /**
-   * Attempts to continue loading.
-   *
-   * @param positionUs The current playback position.
-   * @return True if progress was made, meaning that {@link #getNextLoadPositionUs()} will return
-   *     a different value than prior to the call. False otherwise.
-   */
-  boolean continueLoading(long positionUs);
+    /**
+     * Attempts to continue loading.
+     *
+     * @param positionUs The current playback position.
+     * @return True if progress was made, meaning that {@link #getNextLoadPositionUs()} will return
+     * a different value than prior to the call. False otherwise.
+     */
+    boolean continueLoading(long positionUs);
 
 }

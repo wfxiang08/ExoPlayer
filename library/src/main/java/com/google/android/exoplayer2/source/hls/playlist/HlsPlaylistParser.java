@@ -16,6 +16,7 @@
 package com.google.android.exoplayer2.source.hls.playlist;
 
 import android.net.Uri;
+
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.ParserException;
@@ -23,6 +24,7 @@ import com.google.android.exoplayer2.source.hls.playlist.HlsMediaPlaylist.Segmen
 import com.google.android.exoplayer2.upstream.ParsingLoadable;
 import com.google.android.exoplayer2.util.MimeTypes;
 import com.google.android.exoplayer2.util.Util;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,390 +42,390 @@ import java.util.regex.Pattern;
  */
 public final class HlsPlaylistParser implements ParsingLoadable.Parser<HlsPlaylist> {
 
-  private static final String TAG_VERSION = "#EXT-X-VERSION";
-  private static final String TAG_STREAM_INF = "#EXT-X-STREAM-INF";
-  private static final String TAG_MEDIA = "#EXT-X-MEDIA";
-  private static final String TAG_DISCONTINUITY = "#EXT-X-DISCONTINUITY";
-  private static final String TAG_DISCONTINUITY_SEQUENCE = "#EXT-X-DISCONTINUITY-SEQUENCE";
-  private static final String TAG_PROGRAM_DATE_TIME = "#EXT-X-PROGRAM-DATE-TIME";
-  private static final String TAG_INIT_SEGMENT = "#EXT-X-MAP";
-  private static final String TAG_MEDIA_DURATION = "#EXTINF";
-  private static final String TAG_MEDIA_SEQUENCE = "#EXT-X-MEDIA-SEQUENCE";
-  private static final String TAG_TARGET_DURATION = "#EXT-X-TARGETDURATION";
-  private static final String TAG_ENDLIST = "#EXT-X-ENDLIST";
-  private static final String TAG_KEY = "#EXT-X-KEY";
-  private static final String TAG_BYTERANGE = "#EXT-X-BYTERANGE";
+    private static final String TAG_VERSION = "#EXT-X-VERSION";
+    private static final String TAG_STREAM_INF = "#EXT-X-STREAM-INF";
+    private static final String TAG_MEDIA = "#EXT-X-MEDIA";
+    private static final String TAG_DISCONTINUITY = "#EXT-X-DISCONTINUITY";
+    private static final String TAG_DISCONTINUITY_SEQUENCE = "#EXT-X-DISCONTINUITY-SEQUENCE";
+    private static final String TAG_PROGRAM_DATE_TIME = "#EXT-X-PROGRAM-DATE-TIME";
+    private static final String TAG_INIT_SEGMENT = "#EXT-X-MAP";
+    private static final String TAG_MEDIA_DURATION = "#EXTINF";
+    private static final String TAG_MEDIA_SEQUENCE = "#EXT-X-MEDIA-SEQUENCE";
+    private static final String TAG_TARGET_DURATION = "#EXT-X-TARGETDURATION";
+    private static final String TAG_ENDLIST = "#EXT-X-ENDLIST";
+    private static final String TAG_KEY = "#EXT-X-KEY";
+    private static final String TAG_BYTERANGE = "#EXT-X-BYTERANGE";
 
-  private static final String TYPE_AUDIO = "AUDIO";
-  private static final String TYPE_VIDEO = "VIDEO";
-  private static final String TYPE_SUBTITLES = "SUBTITLES";
-  private static final String TYPE_CLOSED_CAPTIONS = "CLOSED-CAPTIONS";
+    private static final String TYPE_AUDIO = "AUDIO";
+    private static final String TYPE_VIDEO = "VIDEO";
+    private static final String TYPE_SUBTITLES = "SUBTITLES";
+    private static final String TYPE_CLOSED_CAPTIONS = "CLOSED-CAPTIONS";
 
-  private static final String METHOD_NONE = "NONE";
-  private static final String METHOD_AES128 = "AES-128";
+    private static final String METHOD_NONE = "NONE";
+    private static final String METHOD_AES128 = "AES-128";
 
-  private static final String BOOLEAN_TRUE = "YES";
-  private static final String BOOLEAN_FALSE = "NO";
+    private static final String BOOLEAN_TRUE = "YES";
+    private static final String BOOLEAN_FALSE = "NO";
 
-  private static final Pattern REGEX_BANDWIDTH = Pattern.compile("BANDWIDTH=(\\d+)\\b");
-  private static final Pattern REGEX_CODECS = Pattern.compile("CODECS=\"(.+?)\"");
-  private static final Pattern REGEX_RESOLUTION = Pattern.compile("RESOLUTION=(\\d+x\\d+)");
-  private static final Pattern REGEX_TARGET_DURATION = Pattern.compile(TAG_TARGET_DURATION
-      + ":(\\d+)\\b");
-  private static final Pattern REGEX_VERSION = Pattern.compile(TAG_VERSION + ":(\\d+)\\b");
-  private static final Pattern REGEX_MEDIA_SEQUENCE = Pattern.compile(TAG_MEDIA_SEQUENCE
-      + ":(\\d+)\\b");
-  private static final Pattern REGEX_MEDIA_DURATION = Pattern.compile(TAG_MEDIA_DURATION
-      + ":([\\d\\.]+)\\b");
-  private static final Pattern REGEX_BYTERANGE = Pattern.compile(TAG_BYTERANGE
-      + ":(\\d+(?:@\\d+)?)\\b");
-  private static final Pattern REGEX_ATTR_BYTERANGE =
-      Pattern.compile("BYTERANGE=\"(\\d+(?:@\\d+)?)\\b\"");
-  private static final Pattern REGEX_METHOD = Pattern.compile("METHOD=(" + METHOD_NONE + "|"
-      + METHOD_AES128 + ")");
-  private static final Pattern REGEX_URI = Pattern.compile("URI=\"(.+?)\"");
-  private static final Pattern REGEX_IV = Pattern.compile("IV=([^,.*]+)");
-  private static final Pattern REGEX_TYPE = Pattern.compile("TYPE=(" + TYPE_AUDIO + "|" + TYPE_VIDEO
-      + "|" + TYPE_SUBTITLES + "|" + TYPE_CLOSED_CAPTIONS + ")");
-  private static final Pattern REGEX_LANGUAGE = Pattern.compile("LANGUAGE=\"(.+?)\"");
-  private static final Pattern REGEX_NAME = Pattern.compile("NAME=\"(.+?)\"");
-  private static final Pattern REGEX_INSTREAM_ID = Pattern.compile("INSTREAM-ID=\"(.+?)\"");
-  private static final Pattern REGEX_AUTOSELECT = compileBooleanAttrPattern("AUTOSELECT");
-  private static final Pattern REGEX_DEFAULT = compileBooleanAttrPattern("DEFAULT");
-  private static final Pattern REGEX_FORCED = compileBooleanAttrPattern("FORCED");
+    private static final Pattern REGEX_BANDWIDTH = Pattern.compile("BANDWIDTH=(\\d+)\\b");
+    private static final Pattern REGEX_CODECS = Pattern.compile("CODECS=\"(.+?)\"");
+    private static final Pattern REGEX_RESOLUTION = Pattern.compile("RESOLUTION=(\\d+x\\d+)");
+    private static final Pattern REGEX_TARGET_DURATION = Pattern.compile(TAG_TARGET_DURATION
+            + ":(\\d+)\\b");
+    private static final Pattern REGEX_VERSION = Pattern.compile(TAG_VERSION + ":(\\d+)\\b");
+    private static final Pattern REGEX_MEDIA_SEQUENCE = Pattern.compile(TAG_MEDIA_SEQUENCE
+            + ":(\\d+)\\b");
+    private static final Pattern REGEX_MEDIA_DURATION = Pattern.compile(TAG_MEDIA_DURATION
+            + ":([\\d\\.]+)\\b");
+    private static final Pattern REGEX_BYTERANGE = Pattern.compile(TAG_BYTERANGE
+            + ":(\\d+(?:@\\d+)?)\\b");
+    private static final Pattern REGEX_ATTR_BYTERANGE =
+            Pattern.compile("BYTERANGE=\"(\\d+(?:@\\d+)?)\\b\"");
+    private static final Pattern REGEX_METHOD = Pattern.compile("METHOD=(" + METHOD_NONE + "|"
+            + METHOD_AES128 + ")");
+    private static final Pattern REGEX_URI = Pattern.compile("URI=\"(.+?)\"");
+    private static final Pattern REGEX_IV = Pattern.compile("IV=([^,.*]+)");
+    private static final Pattern REGEX_TYPE = Pattern.compile("TYPE=(" + TYPE_AUDIO + "|" + TYPE_VIDEO
+            + "|" + TYPE_SUBTITLES + "|" + TYPE_CLOSED_CAPTIONS + ")");
+    private static final Pattern REGEX_LANGUAGE = Pattern.compile("LANGUAGE=\"(.+?)\"");
+    private static final Pattern REGEX_NAME = Pattern.compile("NAME=\"(.+?)\"");
+    private static final Pattern REGEX_INSTREAM_ID = Pattern.compile("INSTREAM-ID=\"(.+?)\"");
+    private static final Pattern REGEX_AUTOSELECT = compileBooleanAttrPattern("AUTOSELECT");
+    private static final Pattern REGEX_DEFAULT = compileBooleanAttrPattern("DEFAULT");
+    private static final Pattern REGEX_FORCED = compileBooleanAttrPattern("FORCED");
 
-  @Override
-  public HlsPlaylist parse(Uri uri, InputStream inputStream) throws IOException {
-    // InputStream 封装成为: BufferedReader, 注意文件的编码，不过m3u8等文件都是英文
-    BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+    @Override
+    public HlsPlaylist parse(Uri uri, InputStream inputStream) throws IOException {
+        // InputStream 封装成为: BufferedReader, 注意文件的编码，不过m3u8等文件都是英文
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
-    Queue<String> extraLines = new LinkedList<>();
-    String line;
+        Queue<String> extraLines = new LinkedList<>();
+        String line;
 
-    // 这样的一个文件该如何分析呢？
-    //    #EXTM3U
-    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
-    //    hls-360p/hls-360p.m3u8
-    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
-    //    hls-480p/hls-480p.m3u8
-    //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
-    //    hls-720p/hls-720p.m3u8
+        // 这样的一个文件该如何分析呢？
+        //    #EXTM3U
+        //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+        //    hls-360p/hls-360p.m3u8
+        //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+        //    hls-480p/hls-480p.m3u8
+        //    #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+        //    hls-720p/hls-720p.m3u8
 
-    try {
-      while ((line = reader.readLine()) != null) {
-        // 读取一行数据
-        line = line.trim();
-        if (line.isEmpty()) {
-          // Do nothing.
-        } else if (line.startsWith(TAG_STREAM_INF)) {
-          extraLines.add(line);
+        try {
+            while ((line = reader.readLine()) != null) {
+                // 读取一行数据
+                line = line.trim();
+                if (line.isEmpty()) {
+                    // Do nothing.
+                } else if (line.startsWith(TAG_STREAM_INF)) {
+                    extraLines.add(line);
 
-          // 一个m3u8文件有两种格式: master & playlist
-          // 通过个别的tag即可对两者进行区分
-          return parseMasterPlaylist(new LineIterator(extraLines, reader), uri.toString());
-        } else if (line.startsWith(TAG_TARGET_DURATION)
-            || line.startsWith(TAG_MEDIA_SEQUENCE)
-            || line.startsWith(TAG_MEDIA_DURATION)
-            || line.startsWith(TAG_KEY)
-            || line.startsWith(TAG_BYTERANGE)
-            || line.equals(TAG_DISCONTINUITY)
-            || line.equals(TAG_DISCONTINUITY_SEQUENCE)
-            || line.equals(TAG_ENDLIST)) {
-          extraLines.add(line);
-          return parseMediaPlaylist(new LineIterator(extraLines, reader), uri.toString());
-        } else {
-          extraLines.add(line);
-        }
-      }
-    } finally {
-      reader.close();
-    }
-    throw new ParserException("Failed to parse the playlist, could not identify any tags.");
-  }
-
-  private static HlsMasterPlaylist parseMasterPlaylist(LineIterator iterator, String baseUri)
-      throws IOException {
-    ArrayList<HlsMasterPlaylist.HlsUrl> variants = new ArrayList<>(); // 不同分辨率，不同网络条件下的处理
-    ArrayList<HlsMasterPlaylist.HlsUrl> audios = new ArrayList<>();
-    ArrayList<HlsMasterPlaylist.HlsUrl> subtitles = new ArrayList<>();
-    Format muxedAudioFormat = null;
-    Format muxedCaptionFormat = null;
-
-    String line;
-    while (iterator.hasNext()) {
-      // 一行一行遍历
-      line = iterator.next();
-
-      if (line.startsWith(TAG_MEDIA)) {
-        // #EXT-X-MEDIA
-        // #EXTINF:3.008656,
-        @C.SelectionFlags int selectionFlags = parseSelectionFlags(line);
-        String uri = parseOptionalStringAttr(line, REGEX_URI);
-        String name = parseStringAttr(line, REGEX_NAME);
-        String language = parseOptionalStringAttr(line, REGEX_LANGUAGE);
-        Format format;
-        switch (parseStringAttr(line, REGEX_TYPE)) {
-          case TYPE_AUDIO:
-             format = Format.createAudioContainerFormat(name, MimeTypes.APPLICATION_M3U8,
-                null, null, Format.NO_VALUE, Format.NO_VALUE, Format.NO_VALUE, null, selectionFlags,
-                language);
-            if (uri == null) {
-              muxedAudioFormat = format;
-            } else {
-              audios.add(new HlsMasterPlaylist.HlsUrl(name, uri, format, null, format, null));
+                    // 一个m3u8文件有两种格式: master & playlist
+                    // 通过个别的tag即可对两者进行区分
+                    return parseMasterPlaylist(new LineIterator(extraLines, reader), uri.toString());
+                } else if (line.startsWith(TAG_TARGET_DURATION)
+                        || line.startsWith(TAG_MEDIA_SEQUENCE)
+                        || line.startsWith(TAG_MEDIA_DURATION)
+                        || line.startsWith(TAG_KEY)
+                        || line.startsWith(TAG_BYTERANGE)
+                        || line.equals(TAG_DISCONTINUITY)
+                        || line.equals(TAG_DISCONTINUITY_SEQUENCE)
+                        || line.equals(TAG_ENDLIST)) {
+                    extraLines.add(line);
+                    return parseMediaPlaylist(new LineIterator(extraLines, reader), uri.toString());
+                } else {
+                    extraLines.add(line);
+                }
             }
-            break;
-          case TYPE_SUBTITLES:
-            format = Format.createTextContainerFormat(name, MimeTypes.APPLICATION_M3U8,
-                MimeTypes.TEXT_VTT, null, Format.NO_VALUE, selectionFlags, language);
-            subtitles.add(new HlsMasterPlaylist.HlsUrl(name, uri, format, null, format, null));
-            break;
-          case TYPE_CLOSED_CAPTIONS:
-            if ("CC1".equals(parseOptionalStringAttr(line, REGEX_INSTREAM_ID))) {
-              muxedCaptionFormat = Format.createTextContainerFormat(name,
-                  MimeTypes.APPLICATION_M3U8, MimeTypes.APPLICATION_CEA608, null, Format.NO_VALUE,
-                  selectionFlags, language);
+        } finally {
+            reader.close();
+        }
+        throw new ParserException("Failed to parse the playlist, could not identify any tags.");
+    }
+
+    private static HlsMasterPlaylist parseMasterPlaylist(LineIterator iterator, String baseUri)
+            throws IOException {
+        ArrayList<HlsMasterPlaylist.HlsUrl> variants = new ArrayList<>(); // 不同分辨率，不同网络条件下的处理
+        ArrayList<HlsMasterPlaylist.HlsUrl> audios = new ArrayList<>();
+        ArrayList<HlsMasterPlaylist.HlsUrl> subtitles = new ArrayList<>();
+        Format muxedAudioFormat = null;
+        Format muxedCaptionFormat = null;
+
+        String line;
+        while (iterator.hasNext()) {
+            // 一行一行遍历
+            line = iterator.next();
+
+            if (line.startsWith(TAG_MEDIA)) {
+                // #EXT-X-MEDIA
+                // #EXTINF:3.008656,
+                @C.SelectionFlags int selectionFlags = parseSelectionFlags(line);
+                String uri = parseOptionalStringAttr(line, REGEX_URI);
+                String name = parseStringAttr(line, REGEX_NAME);
+                String language = parseOptionalStringAttr(line, REGEX_LANGUAGE);
+                Format format;
+                switch (parseStringAttr(line, REGEX_TYPE)) {
+                    case TYPE_AUDIO:
+                        format = Format.createAudioContainerFormat(name, MimeTypes.APPLICATION_M3U8,
+                                null, null, Format.NO_VALUE, Format.NO_VALUE, Format.NO_VALUE, null, selectionFlags,
+                                language);
+                        if (uri == null) {
+                            muxedAudioFormat = format;
+                        } else {
+                            audios.add(new HlsMasterPlaylist.HlsUrl(name, uri, format, null, format, null));
+                        }
+                        break;
+                    case TYPE_SUBTITLES:
+                        format = Format.createTextContainerFormat(name, MimeTypes.APPLICATION_M3U8,
+                                MimeTypes.TEXT_VTT, null, Format.NO_VALUE, selectionFlags, language);
+                        subtitles.add(new HlsMasterPlaylist.HlsUrl(name, uri, format, null, format, null));
+                        break;
+                    case TYPE_CLOSED_CAPTIONS:
+                        if ("CC1".equals(parseOptionalStringAttr(line, REGEX_INSTREAM_ID))) {
+                            muxedCaptionFormat = Format.createTextContainerFormat(name,
+                                    MimeTypes.APPLICATION_M3U8, MimeTypes.APPLICATION_CEA608, null, Format.NO_VALUE,
+                                    selectionFlags, language);
+                        }
+                        break;
+                    default:
+                        // Do nothing.
+                        break;
+                }
+            } else if (line.startsWith(TAG_STREAM_INF)) {
+                // #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
+                // hls-360p/hls-360p.m3u8
+                // 解析出带宽
+                int bitrate = parseIntAttr(line, REGEX_BANDWIDTH);
+                // 编码器
+                String codecs = parseOptionalStringAttr(line, REGEX_CODECS);
+                // 分辨率: 可选
+                String resolutionString = parseOptionalStringAttr(line, REGEX_RESOLUTION);
+
+                // 解析分辨率(可选)
+                int width;
+                int height;
+                if (resolutionString != null) {
+                    String[] widthAndHeight = resolutionString.split("x");
+                    width = Integer.parseInt(widthAndHeight[0]);
+                    height = Integer.parseInt(widthAndHeight[1]);
+                    if (width <= 0 || height <= 0) {
+                        // Resolution string is invalid.
+                        width = Format.NO_VALUE;
+                        height = Format.NO_VALUE;
+                    }
+                } else {
+                    width = Format.NO_VALUE;
+                    height = Format.NO_VALUE;
+                }
+                line = iterator.next();
+                String name = Integer.toString(variants.size());
+                Format format = Format.createVideoContainerFormat(name, MimeTypes.APPLICATION_M3U8, null,
+                        codecs, bitrate, width, height, Format.NO_VALUE, null);
+
+                // 二级: m3u8文件
+                variants.add(new HlsMasterPlaylist.HlsUrl(name, line, format, null, null, null));
             }
-            break;
-          default:
-            // Do nothing.
-            break;
         }
-      } else if (line.startsWith(TAG_STREAM_INF)) {
-        // #EXT-X-STREAM-INF:PROGRAM-ID=1,BANDWIDTH=144000,CODECS="mp4a.40.2"
-        // hls-360p/hls-360p.m3u8
-        // 解析出带宽
-        int bitrate = parseIntAttr(line, REGEX_BANDWIDTH);
-        // 编码器
-        String codecs = parseOptionalStringAttr(line, REGEX_CODECS);
-        // 分辨率: 可选
-        String resolutionString = parseOptionalStringAttr(line, REGEX_RESOLUTION);
 
-        // 解析分辨率(可选)
-        int width;
-        int height;
-        if (resolutionString != null) {
-          String[] widthAndHeight = resolutionString.split("x");
-          width = Integer.parseInt(widthAndHeight[0]);
-          height = Integer.parseInt(widthAndHeight[1]);
-          if (width <= 0 || height <= 0) {
-            // Resolution string is invalid.
-            width = Format.NO_VALUE;
-            height = Format.NO_VALUE;
-          }
-        } else {
-          width = Format.NO_VALUE;
-          height = Format.NO_VALUE;
-        }
-        line = iterator.next();
-        String name = Integer.toString(variants.size());
-        Format format = Format.createVideoContainerFormat(name, MimeTypes.APPLICATION_M3U8, null,
-            codecs, bitrate, width, height, Format.NO_VALUE, null);
-
-        // 二级: m3u8文件
-        variants.add(new HlsMasterPlaylist.HlsUrl(name, line, format, null, null, null));
-      }
+        // 返回Master
+        return new HlsMasterPlaylist(baseUri, variants, audios, subtitles, muxedAudioFormat,
+                muxedCaptionFormat);
     }
 
-    // 返回Master
-    return new HlsMasterPlaylist(baseUri, variants, audios, subtitles, muxedAudioFormat,
-        muxedCaptionFormat);
-  }
-
-  @C.SelectionFlags
-  private static int parseSelectionFlags(String line) {
-    return (parseBooleanAttribute(line, REGEX_DEFAULT, false) ? C.SELECTION_FLAG_DEFAULT : 0)
-        | (parseBooleanAttribute(line, REGEX_FORCED, false) ? C.SELECTION_FLAG_FORCED : 0)
-        | (parseBooleanAttribute(line, REGEX_AUTOSELECT, false) ? C.SELECTION_FLAG_AUTOSELECT : 0);
-  }
-
-  // 解析普通的Playlist文件
-  private static HlsMediaPlaylist parseMediaPlaylist(LineIterator iterator, String baseUri)
-      throws IOException {
-    int mediaSequence = 0;
-    int version = 1; // Default version == 1.
-    long targetDurationUs = C.TIME_UNSET;
-    boolean hasEndTag = false;
-    Segment initializationSegment = null;
-    List<Segment> segments = new ArrayList<>();
-
-    long segmentDurationUs = 0;
-    int discontinuitySequenceNumber = 0;
-    long playlistStartTimeUs = 0;
-    long segmentStartTimeUs = 0;
-    long segmentByteRangeOffset = 0;
-    long segmentByteRangeLength = C.LENGTH_UNSET;
-    int segmentMediaSequence = 0;
-
-    boolean isEncrypted = false;
-    String encryptionKeyUri = null;
-    String encryptionIV = null;
-
-    String line;
-    while (iterator.hasNext()) {
-      line = iterator.next();
-      if (line.startsWith(TAG_INIT_SEGMENT)) {
-        String uri = parseStringAttr(line, REGEX_URI);
-        String byteRange = parseOptionalStringAttr(line, REGEX_ATTR_BYTERANGE);
-        if (byteRange != null) {
-          String[] splitByteRange = byteRange.split("@");
-          segmentByteRangeLength = Long.parseLong(splitByteRange[0]);
-          if (splitByteRange.length > 1) {
-            segmentByteRangeOffset = Long.parseLong(splitByteRange[1]);
-          }
-        }
-        initializationSegment = new Segment(uri, segmentByteRangeOffset, segmentByteRangeLength);
-        segmentByteRangeOffset = 0;
-        segmentByteRangeLength = C.LENGTH_UNSET;
-      } else if (line.startsWith(TAG_TARGET_DURATION)) {
-        targetDurationUs = parseIntAttr(line, REGEX_TARGET_DURATION) * C.MICROS_PER_SECOND;
-      } else if (line.startsWith(TAG_MEDIA_SEQUENCE)) {
-        mediaSequence = parseIntAttr(line, REGEX_MEDIA_SEQUENCE);
-        segmentMediaSequence = mediaSequence;
-      } else if (line.startsWith(TAG_VERSION)) {
-        // 版本
-        version = parseIntAttr(line, REGEX_VERSION);
-      } else if (line.startsWith(TAG_MEDIA_DURATION)) {
-        // 持续时间
-        segmentDurationUs = (long) (parseDoubleAttr(line, REGEX_MEDIA_DURATION) * C.MICROS_PER_SECOND);
-      } else if (line.startsWith(TAG_KEY)) {
-        // 秘钥
-        String method = parseStringAttr(line, REGEX_METHOD);
-        isEncrypted = METHOD_AES128.equals(method);
-        if (isEncrypted) {
-          encryptionKeyUri = parseStringAttr(line, REGEX_URI);
-          encryptionIV = parseOptionalStringAttr(line, REGEX_IV);
-        } else {
-          encryptionKeyUri = null;
-          encryptionIV = null;
-        }
-      } else if (line.startsWith(TAG_BYTERANGE)) {
-        // byte-range
-        String byteRange = parseStringAttr(line, REGEX_BYTERANGE);
-        String[] splitByteRange = byteRange.split("@");
-        segmentByteRangeLength = Long.parseLong(splitByteRange[0]);
-        if (splitByteRange.length > 1) {
-          segmentByteRangeOffset = Long.parseLong(splitByteRange[1]);
-        }
-      } else if (line.startsWith(TAG_DISCONTINUITY_SEQUENCE)) {
-        discontinuitySequenceNumber = Integer.parseInt(line.substring(line.indexOf(':') + 1));
-      } else if (line.equals(TAG_DISCONTINUITY)) {
-        discontinuitySequenceNumber++;
-      } else if (line.startsWith(TAG_PROGRAM_DATE_TIME)) {
-        if (playlistStartTimeUs == 0) {
-          long programDatetimeUs =
-              C.msToUs(Util.parseXsDateTime(line.substring(line.indexOf(':') + 1)));
-          playlistStartTimeUs = programDatetimeUs - segmentStartTimeUs;
-        }
-      } else if (!line.startsWith("#")) {
-        // 应该就是普通的ts的URL了
-        String segmentEncryptionIV;
-        if (!isEncrypted) {
-          segmentEncryptionIV = null;
-        } else if (encryptionIV != null) {
-          segmentEncryptionIV = encryptionIV;
-        } else {
-          segmentEncryptionIV = Integer.toHexString(segmentMediaSequence);
-        }
-        segmentMediaSequence++;
-        if (segmentByteRangeLength == C.LENGTH_UNSET) {
-          segmentByteRangeOffset = 0;
-        }
-
-        // 获取segments的信息
-        segments.add(new Segment(line, segmentDurationUs, discontinuitySequenceNumber,
-            segmentStartTimeUs, isEncrypted, encryptionKeyUri, segmentEncryptionIV,
-            segmentByteRangeOffset, segmentByteRangeLength));
-        segmentStartTimeUs += segmentDurationUs;
-        segmentDurationUs = 0;
-
-        if (segmentByteRangeLength != C.LENGTH_UNSET) {
-          segmentByteRangeOffset += segmentByteRangeLength;
-        }
-        segmentByteRangeLength = C.LENGTH_UNSET;
-      } else if (line.equals(TAG_ENDLIST)) {
-        hasEndTag = true;
-      }
-    }
-    return new HlsMediaPlaylist(baseUri, playlistStartTimeUs, mediaSequence, version,
-        targetDurationUs, hasEndTag, playlistStartTimeUs != 0, initializationSegment, segments);
-  }
-
-  private static String parseStringAttr(String line, Pattern pattern) throws ParserException {
-    Matcher matcher = pattern.matcher(line);
-    if (matcher.find() && matcher.groupCount() == 1) {
-      return matcher.group(1);
-    }
-    throw new ParserException("Couldn't match " + pattern.pattern() + " in " + line);
-  }
-
-  private static int parseIntAttr(String line, Pattern pattern) throws ParserException {
-    return Integer.parseInt(parseStringAttr(line, pattern));
-  }
-
-  private static double parseDoubleAttr(String line, Pattern pattern) throws ParserException {
-    return Double.parseDouble(parseStringAttr(line, pattern));
-  }
-
-  private static String parseOptionalStringAttr(String line, Pattern pattern) {
-    Matcher matcher = pattern.matcher(line);
-    if (matcher.find()) {
-      return matcher.group(1);
-    }
-    return null;
-  }
-
-  private static boolean parseBooleanAttribute(String line, Pattern pattern, boolean defaultValue) {
-    Matcher matcher = pattern.matcher(line);
-    if (matcher.find()) {
-      return matcher.group(1).equals(BOOLEAN_TRUE);
-    }
-    return defaultValue;
-  }
-
-  private static Pattern compileBooleanAttrPattern(String attribute) {
-    return Pattern.compile(attribute + "=(" + BOOLEAN_FALSE + "|" + BOOLEAN_TRUE + ")");
-  }
-
-  // 将reader和extralines组成的结构按照行遍历
-  private static class LineIterator {
-
-    private final BufferedReader reader;
-    private final Queue<String> extraLines;
-
-    private String next;
-
-    public LineIterator(Queue<String> extraLines, BufferedReader reader) {
-      this.extraLines = extraLines;
-      this.reader = reader;
+    @C.SelectionFlags
+    private static int parseSelectionFlags(String line) {
+        return (parseBooleanAttribute(line, REGEX_DEFAULT, false) ? C.SELECTION_FLAG_DEFAULT : 0)
+                | (parseBooleanAttribute(line, REGEX_FORCED, false) ? C.SELECTION_FLAG_FORCED : 0)
+                | (parseBooleanAttribute(line, REGEX_AUTOSELECT, false) ? C.SELECTION_FLAG_AUTOSELECT : 0);
     }
 
-    public boolean hasNext() throws IOException {
-      if (next != null) {
-        return true;
-      }
-      if (!extraLines.isEmpty()) {
-        next = extraLines.poll();
-        return true;
-      }
-      while ((next = reader.readLine()) != null) {
-        next = next.trim();
-        if (!next.isEmpty()) {
-          return true;
+    // 解析普通的Playlist文件
+    private static HlsMediaPlaylist parseMediaPlaylist(LineIterator iterator, String baseUri)
+            throws IOException {
+        int mediaSequence = 0;
+        int version = 1; // Default version == 1.
+        long targetDurationUs = C.TIME_UNSET;
+        boolean hasEndTag = false;
+        Segment initializationSegment = null;
+        List<Segment> segments = new ArrayList<>();
+
+        long segmentDurationUs = 0;
+        int discontinuitySequenceNumber = 0;
+        long playlistStartTimeUs = 0;
+        long segmentStartTimeUs = 0;
+        long segmentByteRangeOffset = 0;
+        long segmentByteRangeLength = C.LENGTH_UNSET;
+        int segmentMediaSequence = 0;
+
+        boolean isEncrypted = false;
+        String encryptionKeyUri = null;
+        String encryptionIV = null;
+
+        String line;
+        while (iterator.hasNext()) {
+            line = iterator.next();
+            if (line.startsWith(TAG_INIT_SEGMENT)) {
+                String uri = parseStringAttr(line, REGEX_URI);
+                String byteRange = parseOptionalStringAttr(line, REGEX_ATTR_BYTERANGE);
+                if (byteRange != null) {
+                    String[] splitByteRange = byteRange.split("@");
+                    segmentByteRangeLength = Long.parseLong(splitByteRange[0]);
+                    if (splitByteRange.length > 1) {
+                        segmentByteRangeOffset = Long.parseLong(splitByteRange[1]);
+                    }
+                }
+                initializationSegment = new Segment(uri, segmentByteRangeOffset, segmentByteRangeLength);
+                segmentByteRangeOffset = 0;
+                segmentByteRangeLength = C.LENGTH_UNSET;
+            } else if (line.startsWith(TAG_TARGET_DURATION)) {
+                targetDurationUs = parseIntAttr(line, REGEX_TARGET_DURATION) * C.MICROS_PER_SECOND;
+            } else if (line.startsWith(TAG_MEDIA_SEQUENCE)) {
+                mediaSequence = parseIntAttr(line, REGEX_MEDIA_SEQUENCE);
+                segmentMediaSequence = mediaSequence;
+            } else if (line.startsWith(TAG_VERSION)) {
+                // 版本
+                version = parseIntAttr(line, REGEX_VERSION);
+            } else if (line.startsWith(TAG_MEDIA_DURATION)) {
+                // 持续时间
+                segmentDurationUs = (long) (parseDoubleAttr(line, REGEX_MEDIA_DURATION) * C.MICROS_PER_SECOND);
+            } else if (line.startsWith(TAG_KEY)) {
+                // 秘钥
+                String method = parseStringAttr(line, REGEX_METHOD);
+                isEncrypted = METHOD_AES128.equals(method);
+                if (isEncrypted) {
+                    encryptionKeyUri = parseStringAttr(line, REGEX_URI);
+                    encryptionIV = parseOptionalStringAttr(line, REGEX_IV);
+                } else {
+                    encryptionKeyUri = null;
+                    encryptionIV = null;
+                }
+            } else if (line.startsWith(TAG_BYTERANGE)) {
+                // byte-range
+                String byteRange = parseStringAttr(line, REGEX_BYTERANGE);
+                String[] splitByteRange = byteRange.split("@");
+                segmentByteRangeLength = Long.parseLong(splitByteRange[0]);
+                if (splitByteRange.length > 1) {
+                    segmentByteRangeOffset = Long.parseLong(splitByteRange[1]);
+                }
+            } else if (line.startsWith(TAG_DISCONTINUITY_SEQUENCE)) {
+                discontinuitySequenceNumber = Integer.parseInt(line.substring(line.indexOf(':') + 1));
+            } else if (line.equals(TAG_DISCONTINUITY)) {
+                discontinuitySequenceNumber++;
+            } else if (line.startsWith(TAG_PROGRAM_DATE_TIME)) {
+                if (playlistStartTimeUs == 0) {
+                    long programDatetimeUs =
+                            C.msToUs(Util.parseXsDateTime(line.substring(line.indexOf(':') + 1)));
+                    playlistStartTimeUs = programDatetimeUs - segmentStartTimeUs;
+                }
+            } else if (!line.startsWith("#")) {
+                // 应该就是普通的ts的URL了
+                String segmentEncryptionIV;
+                if (!isEncrypted) {
+                    segmentEncryptionIV = null;
+                } else if (encryptionIV != null) {
+                    segmentEncryptionIV = encryptionIV;
+                } else {
+                    segmentEncryptionIV = Integer.toHexString(segmentMediaSequence);
+                }
+                segmentMediaSequence++;
+                if (segmentByteRangeLength == C.LENGTH_UNSET) {
+                    segmentByteRangeOffset = 0;
+                }
+
+                // 获取segments的信息
+                segments.add(new Segment(line, segmentDurationUs, discontinuitySequenceNumber,
+                        segmentStartTimeUs, isEncrypted, encryptionKeyUri, segmentEncryptionIV,
+                        segmentByteRangeOffset, segmentByteRangeLength));
+                segmentStartTimeUs += segmentDurationUs;
+                segmentDurationUs = 0;
+
+                if (segmentByteRangeLength != C.LENGTH_UNSET) {
+                    segmentByteRangeOffset += segmentByteRangeLength;
+                }
+                segmentByteRangeLength = C.LENGTH_UNSET;
+            } else if (line.equals(TAG_ENDLIST)) {
+                hasEndTag = true;
+            }
         }
-      }
-      return false;
+        return new HlsMediaPlaylist(baseUri, playlistStartTimeUs, mediaSequence, version,
+                targetDurationUs, hasEndTag, playlistStartTimeUs != 0, initializationSegment, segments);
     }
 
-    public String next() throws IOException {
-      String result = null;
-      if (hasNext()) {
-        result = next;
-        next = null;
-      }
-      return result;
+    private static String parseStringAttr(String line, Pattern pattern) throws ParserException {
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find() && matcher.groupCount() == 1) {
+            return matcher.group(1);
+        }
+        throw new ParserException("Couldn't match " + pattern.pattern() + " in " + line);
     }
 
-  }
+    private static int parseIntAttr(String line, Pattern pattern) throws ParserException {
+        return Integer.parseInt(parseStringAttr(line, pattern));
+    }
+
+    private static double parseDoubleAttr(String line, Pattern pattern) throws ParserException {
+        return Double.parseDouble(parseStringAttr(line, pattern));
+    }
+
+    private static String parseOptionalStringAttr(String line, Pattern pattern) {
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
+    }
+
+    private static boolean parseBooleanAttribute(String line, Pattern pattern, boolean defaultValue) {
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            return matcher.group(1).equals(BOOLEAN_TRUE);
+        }
+        return defaultValue;
+    }
+
+    private static Pattern compileBooleanAttrPattern(String attribute) {
+        return Pattern.compile(attribute + "=(" + BOOLEAN_FALSE + "|" + BOOLEAN_TRUE + ")");
+    }
+
+    // 将reader和extralines组成的结构按照行遍历
+    private static class LineIterator {
+
+        private final BufferedReader reader;
+        private final Queue<String> extraLines;
+
+        private String next;
+
+        public LineIterator(Queue<String> extraLines, BufferedReader reader) {
+            this.extraLines = extraLines;
+            this.reader = reader;
+        }
+
+        public boolean hasNext() throws IOException {
+            if (next != null) {
+                return true;
+            }
+            if (!extraLines.isEmpty()) {
+                next = extraLines.poll();
+                return true;
+            }
+            while ((next = reader.readLine()) != null) {
+                next = next.trim();
+                if (!next.isEmpty()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public String next() throws IOException {
+            String result = null;
+            if (hasNext()) {
+                result = next;
+                next = null;
+            }
+            return result;
+        }
+
+    }
 
 }

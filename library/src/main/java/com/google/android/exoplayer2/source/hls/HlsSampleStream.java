@@ -18,40 +18,42 @@ package com.google.android.exoplayer2.source.hls;
 import com.google.android.exoplayer2.FormatHolder;
 import com.google.android.exoplayer2.decoder.DecoderInputBuffer;
 import com.google.android.exoplayer2.source.SampleStream;
+
 import java.io.IOException;
 
 /**
  * {@link SampleStream} for a particular track group in HLS.
  */
-/* package */ final class HlsSampleStream implements SampleStream {
+/* package */
+final class HlsSampleStream implements SampleStream {
 
-  public final int group;
-  
-  private final HlsSampleStreamWrapper sampleStreamWrapper;
+    public final int group;
 
-  public HlsSampleStream(HlsSampleStreamWrapper sampleStreamWrapper, int group) {
-    this.sampleStreamWrapper = sampleStreamWrapper;
-    this.group = group;
-  }
+    private final HlsSampleStreamWrapper sampleStreamWrapper;
 
-  @Override
-  public boolean isReady() {
-    return sampleStreamWrapper.isReady(group);
-  }
+    public HlsSampleStream(HlsSampleStreamWrapper sampleStreamWrapper, int group) {
+        this.sampleStreamWrapper = sampleStreamWrapper;
+        this.group = group;
+    }
 
-  @Override
-  public void maybeThrowError() throws IOException {
-    sampleStreamWrapper.maybeThrowError();
-  }
+    @Override
+    public boolean isReady() {
+        return sampleStreamWrapper.isReady(group);
+    }
 
-  @Override
-  public int readData(FormatHolder formatHolder, DecoderInputBuffer buffer) {
-    return sampleStreamWrapper.readData(group, formatHolder, buffer);
-  }
+    @Override
+    public void maybeThrowError() throws IOException {
+        sampleStreamWrapper.maybeThrowError();
+    }
 
-  @Override
-  public void skipToKeyframeBefore(long timeUs) {
-    sampleStreamWrapper.skipToKeyframeBefore(group, timeUs);
-  }
+    @Override
+    public int readData(FormatHolder formatHolder, DecoderInputBuffer buffer) {
+        return sampleStreamWrapper.readData(group, formatHolder, buffer);
+    }
+
+    @Override
+    public void skipToKeyframeBefore(long timeUs) {
+        sampleStreamWrapper.skipToKeyframeBefore(group, timeUs);
+    }
 
 }
